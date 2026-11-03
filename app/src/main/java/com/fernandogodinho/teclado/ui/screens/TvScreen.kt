@@ -115,6 +115,7 @@ fun TvScreen(onBack: () -> Unit) {
                         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text(p.name, style = MaterialTheme.typography.bodyLarge)
+                                Text(p.platform.label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(
                                     when (status[p.name]) {
                                         TvLinkStatus.CONNECTED -> "Conectada"
@@ -149,7 +150,7 @@ fun TvScreen(onBack: () -> Unit) {
 
             SectionTitle("TVs na rede")
             SettingsGroup {
-                val notPaired = found.filter { f -> paired.none { it.name == f.name } }
+                val notPaired = found.filter { f -> paired.none { it.name == f.name && it.platform == f.platform } }
                 if (notPaired.isEmpty()) {
                     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (scanning) {
@@ -168,15 +169,21 @@ fun TvScreen(onBack: () -> Unit) {
                     Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.Tv, null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(12.dp))
-                        Text(f.name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                        Button(onClick = { tv.startPairing(f) }, shape = RoundedCornerShape(12.dp)) { Text("Parear") }
+                        Column(Modifier.weight(1f)) {
+                            Text(f.name, style = MaterialTheme.typography.bodyLarge)
+                            Text(f.platform.label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Button(onClick = { tv.startPairing(f) }, shape = RoundedCornerShape(12.dp)) {
+                            Text(if (f.platform == com.fernandogodinho.teclado.tv.TvPlatform.ROKU) "Adicionar" else "Parear")
+                        }
                     }
                 }
             }
             Gap(14)
             Text(
-                "Funciona com TVs Google TV e Android TV (TCL, Sony, Philips, Xiaomi, Hisense, entre outras) que aceitam o app Google TV como controle. " +
-                    "TVs Samsung, LG e Roku usam sistemas próprios e ainda não são compatíveis. " +
+                "Funciona com Samsung (Tizen, 2016 em diante), LG (webOS), TVs com Google TV ou Android TV (TCL, Sony, Philips, Philco, Multilaser, Sharp, Hisense e outras) " +
+                    "e TVs Roku (TCL, Semp, AOC, Philco Roku TV). Nas Roku, a TV não avisa quando abre uma busca: abra “Digitar na TV” pelo atalho ou pelo app. " +
+                    "TVs Hisense com sistema VIDAA e Panasonic ainda não são compatíveis. " +
                     "Dica: adicione o atalho “Digitar na TV” às Configurações rápidas do celular.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -202,7 +209,21 @@ private fun PairingDialog(state: TvPairingState, onSubmit: (String) -> Unit, onD
                     TvPairingState.Step.CONNECTING, TvPairingState.Step.CHECKING -> Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(12.dp))
-                        Text(if (state.step == TvPairingState.Step.CONNECTING) "Pedindo um código à TV…" else "Conferindo o código…")
+                        Text(
+                            when {
+                                state.step == TvPairingState.Step.CHECKING && state.tv.platform == com.fernandogodinho.teclado.tv.TvPlatform.ROKU -> "Conferindo se a TV aceita comandos…"
+                                state.step == TvPairingState.Step.CONNECTING -> "Conectando à TV…"
+                                else -> "Conferindo o código…"
+                            },
+                        )
+                    }
+                    TvPairingState.Step.WAIT_TV -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(12.dp))
+                            Text("Olhe para a TV")
+                        }
+                        Text(state.tv.platform.pairingHint)
                     }
                     TvPairingState.Step.ENTER_CODE -> {
                         Text("Digite o código de 6 letras e números que apareceu na tela da TV.")

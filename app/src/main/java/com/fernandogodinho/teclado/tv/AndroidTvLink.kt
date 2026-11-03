@@ -77,17 +77,9 @@ class AndroidTvPairing(private val host: InetAddress, private val clientName: St
 class AndroidTvSession(
     private val host: InetAddress,
     private val pinnedSha256: String?,
-    private val listener: Listener,
-) : Closeable {
-
-    interface Listener {
-        fun onReady(session: AndroidTvSession)
-        fun onTextFieldRequested(session: AndroidTvSession, label: String, value: String)
-        fun onTextFieldUpdate(session: AndroidTvSession, fieldCounter: Int)
-        fun onClosed(session: AndroidTvSession, error: Throwable?)
-        /** First certificate seen when nothing was pinned yet (right after pairing). */
-        fun onCertificate(session: AndroidTvSession, sha256: String) = Unit
-    }
+    private val listener: TvSessionListener,
+) : TvSession, Closeable {
+    @Volatile private var lastSentAt = 0L
 
     private val trust = TvIdentity.PinningTrustManager(pinnedSha256)
     @Volatile private var socket: SSLSocket? = null
@@ -99,15 +91,15 @@ class AndroidTvSession(
         private set
     @Volatile var fieldCounter = 0
         private set
-    @Volatile var ready = false
+    @Volatile override var ready = false
         private set
 
     /** Connects (blocking) and starts listening on a background thread. */
-    fun open() {
+    override fun open() {
         val s = openTls(host, AtvProtocol.REMOTE_PORT, trust, readTimeoutMs = 20_000)
         socket = s
         out = s.outputStream
-        if (pinnedSha256 == null) trust.seen?.let { listener.onCertificate(this, TvIdentity.fingerprint(it)) }
+        if (pinnedSha256 == null) trust.seen?.let { listener.onCredentials(this, null, TvIdentity.fingerprint(it)) }
         Thread({ readLoop(s) }, "teclado-tv").apply { isDaemon = true }.start()
     }
 
@@ -134,7 +126,8 @@ class AndroidTvSession(
                         imeCounter = msg.imeCounter
                         if (msg.fieldCounter != fieldCounter) {
                             fieldCounter = msg.fieldCounter
-                            listener.onTextFieldUpdate(this, fieldCounter)
+                            // Some TVs only announce a new field through the counters; ignore our own echoes.
+                            if (android.os.SystemClock.elapsedRealtime() - lastSentAt > 3_000) listener.onTextFieldRequested(this, "", "")
                         }
                     }
                     is AtvProtocol.Incoming.TextField -> listener.onTextFieldRequested(this, msg.label, msg.value)
@@ -161,12 +154,16 @@ class AndroidTvSession(
     }
 
     /** Replaces the text of the focused field on the TV. Never logs the text. */
-    fun setText(text: String) {
+    override fun setText(text: String) {
+        lastSentAt = android.os.SystemClock.elapsedRealtime()
         runCatching { send(AtvProtocol.setText(text, imeCounter, fieldCounter)) }
             .onFailure { Log.w(TAG, "could not send text to the TV") }
     }
 
-    fun key(code: Int) {
+    override fun key(key: TvKey) = keyCode(if (key == TvKey.ENTER) AtvProtocol.KEY_ENTER else AtvProtocol.KEY_BACK)
+
+    fun keyCode(code: Int) {
+        lastSentAt = android.os.SystemClock.elapsedRealtime()
         runCatching { send(AtvProtocol.key(code)) }.onFailure { Log.w(TAG, "could not send key to the TV") }
     }
 

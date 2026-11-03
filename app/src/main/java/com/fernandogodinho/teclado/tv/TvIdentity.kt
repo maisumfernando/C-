@@ -83,6 +83,10 @@ object TvIdentity {
     fun sslContext(trust: PinningTrustManager): SSLContext =
         SSLContext.getInstance("TLS").apply { init(arrayOf(ClientKeyManager()), arrayOf(trust), null) }
 
+    /** TLS without a client certificate (Samsung and LG authenticate with a token instead). */
+    fun trustOnlyContext(trust: PinningTrustManager): SSLContext =
+        SSLContext.getInstance("TLS").apply { init(null, arrayOf(trust), null) }
+
     fun fingerprint(cert: X509Certificate): String =
         MessageDigest.getInstance("SHA-256").digest(cert.encoded).joinToString("") { "%02x".format(it) }
 }

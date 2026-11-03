@@ -28,7 +28,8 @@ data class TvPairingState(
     val step: Step,
     val error: String? = null,
 ) {
-    enum class Step { CONNECTING, ENTER_CODE, CHECKING, DONE, FAILED }
+    /** ENTER_CODE: Google TV shows a code; WAIT_TV: Samsung/LG ask the user to allow on the TV. */
+    enum class Step { CONNECTING, ENTER_CODE, WAIT_TV, CHECKING, DONE, FAILED }
 }
 
 /** A TV asked for text (a search box or any text field got focus). */
@@ -36,8 +37,9 @@ data class TvTextRequest(val tvName: String, val label: String, val value: Strin
 
 /**
  * Everything about typing on TVs: discovery, pairing, live sessions and the "listen" mode used
- * by [TvLinkService]. Only text typed in the "Digitar na TV" screen is ever sent; the keyboard
- * itself never talks to the network.
+ * by [TvLinkService]. Works with Google TV / Android TV, Samsung (Tizen), LG (webOS) and Roku TV.
+ * Only text typed in the "Digitar na TV" screen is ever sent; the keyboard itself never talks to
+ * the network.
  */
 class TvManager(private val context: Context, private val scope: CoroutineScope) {
     private val store = TvStore(context)
@@ -60,13 +62,13 @@ class TvManager(private val context: Context, private val scope: CoroutineScope)
     private val _requests = MutableSharedFlow<TvTextRequest>(extraBufferCapacity = 4)
     val requests: SharedFlow<TvTextRequest> = _requests.asSharedFlow()
 
-    private val sessions = HashMap<String, AndroidTvSession>()
+    private val sessions = HashMap<String, TvSession>()
     /** TVs with a connection attempt in progress (avoids two parallel sessions to one TV). */
     private val connecting = HashSet<String>()
     private var discovery: TvDiscovery? = null
     private var pairingLink: AndroidTvPairing? = null
+    private var pairingJob: Job? = null
     private var listenJob: Job? = null
-    private var lastTextSentAt = 0L
     private val lastRequestAt = HashMap<String, Long>()
 
     // --- Discovery ------------------------------------------------------------------------
@@ -77,8 +79,10 @@ class TvManager(private val context: Context, private val scope: CoroutineScope)
         discovery = TvDiscovery(context) { list ->
             _found.value = list
             // Keep addresses of paired TVs up to date (DHCP may give them a new one).
-            val byName = list.associateBy { it.name }
-            val updated = _paired.value.map { tv -> byName[tv.name]?.let { tv.copy(host = it.host.hostAddress ?: tv.host) } ?: tv }
+            val updated = _paired.value.map { tv ->
+                list.firstOrNull { it.name == tv.name && it.platform == tv.platform }
+                    ?.let { tv.copy(host = it.host.hostAddress ?: tv.host) } ?: tv
+            }
             if (updated != _paired.value) setPaired(updated)
         }.also { it.start() }
     }
@@ -94,16 +98,57 @@ class TvManager(private val context: Context, private val scope: CoroutineScope)
     fun startPairing(tv: FoundTv) {
         cancelPairing()
         _pairing.value = TvPairingState(tv, TvPairingState.Step.CONNECTING)
-        scope.launch(Dispatchers.IO) {
-            val link = AndroidTvPairing(tv.host, clientName = "Teclado do Fernando Godinho (${Build.MODEL})")
-            pairingLink = link
-            runCatching { link.start() }
-                .onSuccess { _pairing.value = TvPairingState(tv, TvPairingState.Step.ENTER_CODE) }
-                .onFailure {
-                    Log.w(TAG, "pairing start failed: ${it.javaClass.simpleName}")
-                    link.close()
-                    _pairing.value = TvPairingState(tv, TvPairingState.Step.FAILED, "Não foi possível falar com a TV. Ela está ligada e na mesma rede Wi-Fi?")
-                }
+        pairingJob = scope.launch(Dispatchers.IO) {
+            when (tv.platform) {
+                TvPlatform.ANDROID_TV -> startCodePairing(tv)
+                else -> pairByPrompt(tv)
+            }
+        }
+    }
+
+    /** Google TV / Android TV: the TV shows a code that the user types on the phone. */
+    private fun startCodePairing(tv: FoundTv) {
+        val link = AndroidTvPairing(tv.host, clientName = "Teclado do Fernando Godinho (${Build.MODEL})")
+        pairingLink = link
+        runCatching { link.start() }
+            .onSuccess { _pairing.value = TvPairingState(tv, TvPairingState.Step.ENTER_CODE) }
+            .onFailure {
+                Log.w(TAG, "pairing start failed: ${it.javaClass.simpleName}")
+                link.close()
+                _pairing.value = TvPairingState(tv, TvPairingState.Step.FAILED, "Não foi possível falar com a TV. Ela está ligada e na mesma rede Wi-Fi?")
+            }
+    }
+
+    /** Samsung, LG and Roku: connect; the TV asks the user to allow this phone (Roku needs nothing). */
+    private fun pairByPrompt(tv: FoundTv) {
+        val host = tv.host.hostAddress ?: return
+        var paired = PairedTv(tv.name, host, pin = null, pairedAt = System.currentTimeMillis(), platform = tv.platform)
+        _pairing.value = TvPairingState(tv, if (tv.platform == TvPlatform.ROKU) TvPairingState.Step.CHECKING else TvPairingState.Step.WAIT_TV)
+        val session = newSession(paired, object : TvSessionListener {
+            override fun onReady(session: TvSession) = Unit
+            override fun onTextFieldRequested(session: TvSession, label: String, value: String) = Unit
+            override fun onClosed(session: TvSession, error: Throwable?) = Unit
+            override fun onCredentials(session: TvSession, token: String?, pin: String?) {
+                paired = paired.copy(token = token ?: paired.token, pin = pin ?: paired.pin)
+            }
+        })
+        try {
+            session.open()
+            session.close()
+            setPaired(_paired.value.filterNot { it.name == tv.name && it.platform == tv.platform } + paired)
+            _pairing.value = TvPairingState(tv, TvPairingState.Step.DONE)
+            connect(paired.name)
+        } catch (e: TvRejectedException) {
+            session.close()
+            _pairing.value = TvPairingState(tv, TvPairingState.Step.FAILED, "${e.message}. Tente de novo e aceite na tela da TV.")
+        } catch (t: Throwable) {
+            session.close()
+            Log.w(TAG, "pairing failed: ${t.javaClass.simpleName}")
+            _pairing.value = TvPairingState(
+                tv, TvPairingState.Step.FAILED,
+                if (tv.platform == TvPlatform.ROKU) "A TV não aceitou comandos. ${TvPlatform.ROKU.pairingHint}"
+                else "Não foi possível falar com a TV. Ela está ligada e na mesma rede Wi-Fi?",
+            )
         }
     }
 
@@ -115,8 +160,9 @@ class TvManager(private val context: Context, private val scope: CoroutineScope)
             try {
                 link.finish(code)
                 link.close()
-                val tv = PairedTv(state.tv.name, state.tv.host.hostAddress ?: return@launch, pin = null, pairedAt = System.currentTimeMillis())
-                setPaired(_paired.value.filterNot { it.name == tv.name } + tv)
+                val host = state.tv.host.hostAddress ?: return@launch
+                val tv = PairedTv(state.tv.name, host, pin = null, pairedAt = System.currentTimeMillis(), platform = TvPlatform.ANDROID_TV)
+                setPaired(_paired.value.filterNot { it.name == tv.name && it.platform == tv.platform } + tv)
                 _pairing.value = state.copy(step = TvPairingState.Step.DONE)
                 connect(tv.name)
             } catch (e: WrongCodeException) {
@@ -129,6 +175,8 @@ class TvManager(private val context: Context, private val scope: CoroutineScope)
     }
 
     fun cancelPairing() {
+        pairingJob?.cancel()
+        pairingJob = null
         pairingLink?.close()
         pairingLink = null
         _pairing.value = null
@@ -143,7 +191,19 @@ class TvManager(private val context: Context, private val scope: CoroutineScope)
 
     fun statusOf(name: String) = _status.value[name] ?: TvLinkStatus.DISCONNECTED
 
+    fun platformOf(name: String) = _paired.value.firstOrNull { it.name == name }?.platform
+
     private fun setStatus(name: String, s: TvLinkStatus) = _status.update { it + (name to s) }
+
+    private fun newSession(tv: PairedTv, listener: TvSessionListener): TvSession {
+        val address = InetAddress.getByName(tv.host)
+        return when (tv.platform) {
+            TvPlatform.ANDROID_TV -> AndroidTvSession(address, tv.pin, listener)
+            TvPlatform.SAMSUNG -> SamsungTvSession(address, tv.token, tv.pin, listener)
+            TvPlatform.LG -> LgTvSession(address, tv.token, tv.pin, listener)
+            TvPlatform.ROKU -> RokuTvSession(address, listener)
+        }
+    }
 
     fun connect(name: String) {
         val tv = _paired.value.firstOrNull { it.name == name } ?: return
@@ -161,35 +221,35 @@ class TvManager(private val context: Context, private val scope: CoroutineScope)
     }
 
     private fun openSession(tv: PairedTv, name: String) {
-        run {
-            val address = runCatching { InetAddress.getByName(tv.host) }.getOrNull()
-            if (address == null) {
-                setStatus(name, TvLinkStatus.UNREACHABLE)
-                return
-            }
-            val session = AndroidTvSession(address, tv.pin, object : AndroidTvSession.Listener {
-                override fun onReady(session: AndroidTvSession) = setStatus(name, TvLinkStatus.CONNECTED)
-                override fun onCertificate(session: AndroidTvSession, sha256: String) {
-                    // Trust on first use, right after the user paired with the code.
-                    setPaired(_paired.value.map { if (it.name == name && it.pin == null) it.copy(pin = sha256) else it })
+        val session = runCatching {
+            newSession(tv, object : TvSessionListener {
+                override fun onReady(session: TvSession) = setStatus(name, TvLinkStatus.CONNECTED)
+                override fun onCredentials(session: TvSession, token: String?, pin: String?) {
+                    // Trust on first use (right after pairing); a new token replaces the old one.
+                    setPaired(
+                        _paired.value.map {
+                            if (it.name != name) it else it.copy(pin = it.pin ?: pin, token = token ?: it.token)
+                        },
+                    )
                 }
-                override fun onTextFieldRequested(session: AndroidTvSession, label: String, value: String) = request(name, label, value)
-                override fun onTextFieldUpdate(session: AndroidTvSession, fieldCounter: Int) {
-                    // Some TVs only announce the new field through counters; ignore our own echoes.
-                    if (SystemClock.elapsedRealtime() - lastTextSentAt > 3_000) request(name, "", "")
-                }
-                override fun onClosed(session: AndroidTvSession, error: Throwable?) {
+                override fun onTextFieldRequested(session: TvSession, label: String, value: String) = request(name, label, value)
+                override fun onClosed(session: TvSession, error: Throwable?) {
                     synchronized(sessions) { if (sessions[name] === session) sessions.remove(name) }
                     // An established session that drops (Wi-Fi, TV turned off) only needs a reconnect.
                     setStatus(name, TvLinkStatus.DISCONNECTED)
                 }
             })
-            synchronized(sessions) { sessions[name] = session }
-            runCatching { session.open() }.onFailure { e ->
-                synchronized(sessions) { sessions.remove(name) }
-                val needsPairing = e is javax.net.ssl.SSLHandshakeException || e.cause is java.security.cert.CertificateException
-                setStatus(name, if (needsPairing) TvLinkStatus.NEEDS_PAIRING else TvLinkStatus.UNREACHABLE)
-            }
+        }.getOrElse {
+            setStatus(name, TvLinkStatus.UNREACHABLE)
+            return
+        }
+        synchronized(sessions) { sessions[name] = session }
+        runCatching { session.open() }.onFailure { e ->
+            synchronized(sessions) { sessions.remove(name) }
+            session.close()
+            val needsPairing = e is TvRejectedException || e is javax.net.ssl.SSLHandshakeException ||
+                e.cause is java.security.cert.CertificateException
+            setStatus(name, if (needsPairing) TvLinkStatus.NEEDS_PAIRING else TvLinkStatus.UNREACHABLE)
         }
     }
 
@@ -216,15 +276,13 @@ class TvManager(private val context: Context, private val scope: CoroutineScope)
         } ?: false
     }
 
-    /** Replaces the TV's focused field with [text]. */
+    /** Makes the TV's focused field show [text]. */
     suspend fun setText(name: String, text: String) = withContext(Dispatchers.IO) {
-        lastTextSentAt = SystemClock.elapsedRealtime()
         session(name)?.setText(text)
     }
 
-    suspend fun key(name: String, code: Int) = withContext(Dispatchers.IO) {
-        lastTextSentAt = SystemClock.elapsedRealtime()
-        session(name)?.key(code)
+    suspend fun key(name: String, key: TvKey) = withContext(Dispatchers.IO) {
+        session(name)?.key(key)
     }
 
     private fun request(name: String, label: String, value: String) {
@@ -243,14 +301,15 @@ class TvManager(private val context: Context, private val scope: CoroutineScope)
         listenJob = scope.launch {
             var pause = 5_000L
             while (isActive) {
-                val tvs = _paired.value
+                // Roku cannot announce text fields, so there is nothing to listen to.
+                val tvs = _paired.value.filter { it.platform != TvPlatform.ROKU }
                 tvs.forEach { if (session(it.name) == null) connect(it.name) }
                 val anyConnected = tvs.any { statusOf(it.name) == TvLinkStatus.CONNECTED }
                 pause = if (anyConnected) 15_000L else (pause * 2).coerceAtMost(120_000L)
                 if (!anyConnected && tvs.isNotEmpty()) {
                     // The TV may have a new address: look for it briefly.
                     startScan()
-                    delay(6_000)
+                    delay(8_000)
                     stopScan()
                 }
                 delay(pause)

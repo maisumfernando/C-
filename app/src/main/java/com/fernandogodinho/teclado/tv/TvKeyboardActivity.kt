@@ -235,19 +235,21 @@ private fun TvKeyboardScreen(requested: String?, initial: String, onPairNew: () 
                     placeholder = { Text("O que você digitar aqui aparece na TV") },
                     shape = RoundedCornerShape(18.dp),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { scope.launch { tv.key(name, AtvProtocol.KEY_ENTER) } }),
+                    keyboardActions = KeyboardActions(onSearch = { scope.launch { tv.key(name, TvKey.ENTER) } }),
                 )
                 Spacer(Modifier.heightIn(min = 12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Button(onClick = { scope.launch { tv.key(name, AtvProtocol.KEY_ENTER) } }, shape = RoundedCornerShape(14.dp)) {
+                    Button(onClick = { scope.launch { tv.key(name, TvKey.ENTER) } }, shape = RoundedCornerShape(14.dp)) {
                         Icon(Icons.AutoMirrored.Outlined.Send, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
                         Text("Enviar")
                     }
-                    FilledTonalButton(onClick = { scope.launch { tv.key(name, AtvProtocol.KEY_BACK) } }, shape = RoundedCornerShape(14.dp)) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Voltar")
+                    if (tv.platformOf(name) != TvPlatform.LG) {
+                        FilledTonalButton(onClick = { scope.launch { tv.key(name, TvKey.BACK) } }, shape = RoundedCornerShape(14.dp)) {
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Voltar")
+                        }
                     }
                     TextButton(onClick = {
                         field = TextFieldValue("")

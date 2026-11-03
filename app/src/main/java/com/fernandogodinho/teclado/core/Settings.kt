@@ -75,6 +75,7 @@ data class AppSettings(
     val autoCorrect: Boolean = true,
     val suggestions: Boolean = true,
     val doubleSpacePeriod: Boolean = true,
+    /** Fraction of the full keyboard height (1.0 = 100%, the largest size; 0.7 = compact). */
     val keyboardHeight: Float = 1.0f,
     val longPressDelayMs: Int = 300,
     val clipboardHistory: Boolean = true,
@@ -88,6 +89,8 @@ data class AppSettings(
     // Onboarding
     val onboardingDone: Boolean = false,
 )
+
+const val MIN_KEYBOARD_HEIGHT = 0.7f
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "teclado_settings")
 
@@ -113,7 +116,9 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val autoCorrect = booleanPreferencesKey("auto_correct")
         val suggestions = booleanPreferencesKey("suggestions")
         val doubleSpace = booleanPreferencesKey("double_space")
-        val height = floatPreferencesKey("keyboard_height")
+        // v2: 100% became the maximum (and default) size; the old 0.8..1.3 scale is not migrated,
+        // so everyone starts at the full height.
+        val height = floatPreferencesKey("keyboard_height_v2")
         val longPress = intPreferencesKey("long_press_ms")
         val clipboard = booleanPreferencesKey("clipboard_history")
         val smartPaste = booleanPreferencesKey("smart_paste")
@@ -154,7 +159,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
     fun setAutoCorrect(v: Boolean) = update { it[K.autoCorrect] = v }
     fun setSuggestions(v: Boolean) = update { it[K.suggestions] = v }
     fun setDoubleSpacePeriod(v: Boolean) = update { it[K.doubleSpace] = v }
-    fun setKeyboardHeight(v: Float) = update { it[K.height] = v.coerceIn(0.8f, 1.3f) }
+    fun setKeyboardHeight(v: Float) = update { it[K.height] = v.coerceIn(MIN_KEYBOARD_HEIGHT, 1f) }
     fun setLongPressDelay(v: Int) = update { it[K.longPress] = v.coerceIn(150, 700) }
     fun setClipboardHistory(v: Boolean) = update { it[K.clipboard] = v }
     fun setOnboardingDone(v: Boolean) = update { it[K.onboarding] = v }
@@ -194,7 +199,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             autoCorrect = this[K.autoCorrect] ?: d.autoCorrect,
             suggestions = this[K.suggestions] ?: d.suggestions,
             doubleSpacePeriod = this[K.doubleSpace] ?: d.doubleSpacePeriod,
-            keyboardHeight = this[K.height] ?: d.keyboardHeight,
+            keyboardHeight = (this[K.height] ?: d.keyboardHeight).coerceIn(MIN_KEYBOARD_HEIGHT, 1f),
             longPressDelayMs = this[K.longPress] ?: d.longPressDelayMs,
             clipboardHistory = this[K.clipboard] ?: d.clipboardHistory,
             smartPaste = this[K.smartPaste] ?: d.smartPaste,

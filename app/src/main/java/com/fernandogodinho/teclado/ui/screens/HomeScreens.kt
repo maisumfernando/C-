@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
@@ -290,6 +291,14 @@ fun HomeScreen(
                 "Modelos de IA",
                 subtitle = listOfNotNull(speech?.name, text?.name).joinToString(" · ").ifEmpty { "Nenhum modelo instalado" },
             ) { navigate(MainActivity.ROUTE_MODELS) }
+            GroupDivider()
+            val bench by app.benchmark.state.collectAsState()
+            NavRow(
+                Icons.Outlined.Speed,
+                "Teste de velocidade",
+                subtitle = bench.report?.let { "Medido neste celular · toque para ver as combinações" }
+                    ?: "Compare os modelos e as combinações no seu celular",
+            ) { navigate(MainActivity.ROUTE_BENCHMARK) }
             GroupDivider()
             NavRow(
                 Icons.Outlined.Mic,

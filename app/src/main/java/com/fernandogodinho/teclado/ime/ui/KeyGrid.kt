@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -57,6 +58,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fernandogodinho.teclado.core.AppSettings
+import com.fernandogodinho.teclado.dictation.DictationPhase
 import com.fernandogodinho.teclado.ime.EnterKind
 import com.fernandogodinho.teclado.ime.Feedback
 import com.fernandogodinho.teclado.ime.KeyboardController
@@ -171,6 +173,8 @@ class KeyTouchTracker(
     }
 
     fun reset() {
+        // A gesture interrupted by the system still counts as letting go of the space bar.
+        if (tracks.values.any { it.mode == Mode.DICTATE }) controller.finishDictation()
         tracks.values.forEach { it.cancel() }
         tracks.clear()
         pressed.clear()
@@ -386,6 +390,12 @@ fun KeyGrid(
 }
 
 @Composable
+private fun quickListening(controller: KeyboardController): Boolean {
+    val phase = controller.dictation?.state?.collectAsState()?.value?.phase ?: return false
+    return phase == DictationPhase.STARTING || phase == DictationPhase.LISTENING
+}
+
+@Composable
 private fun KeyView(geo: KeyGeo, controller: KeyboardController, pressed: Boolean, colors: KeyboardColors) {
     val density = LocalDensity.current
     val key = geo.key
@@ -415,7 +425,8 @@ private fun KeyView(geo: KeyGeo, controller: KeyboardController, pressed: Boolea
             KeyAction.Shift -> ShiftIcon(controller.shift, content)
             KeyAction.Enter -> Icon(enterIcon(controller.enterKind), "Enter", tint = content, modifier = Modifier.size(22.dp))
             KeyAction.Emoji -> Icon(Icons.Outlined.EmojiEmotions, "Emojis", tint = content, modifier = Modifier.size(22.dp))
-            KeyAction.Space -> if (controller.quickDictation) {
+            KeyAction.Space -> if (controller.quickDictation && controller.quickHolding && quickListening(controller)) {
+                // Only while the finger is down: once released the toolbar shows the progress.
                 Text("● Ouvindo… solte para inserir", color = colors.recording, fontSize = 13.sp, fontWeight = FontWeight.Medium)
             } else {
                 Text(

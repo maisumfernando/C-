@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -65,7 +66,7 @@ import com.fernandogodinho.teclado.ui.components.Pill
 import com.fernandogodinho.teclado.ui.components.SectionTitle
 
 @Composable
-fun ModelsScreen(onBack: () -> Unit) {
+fun ModelsScreen(onBack: () -> Unit, onBenchmark: () -> Unit = {}) {
     val context = LocalContext.current
     val app = context.tecladoApp
     val settings by app.settings.settings.collectAsState()
@@ -113,6 +114,8 @@ fun ModelsScreen(onBack: () -> Unit) {
                     if (recText.id !in installed) app.models.download(recText)
                 }
             }
+
+            BenchmarkLink(onBenchmark)
 
             SectionTitle("Voz → texto (Whisper)")
             Text(
@@ -410,5 +413,30 @@ private fun OemDownloadTip() {
             color = scheme.onSurfaceVariant,
         )
         TextButton(onClick = { OemTips.openBatterySettings(context) }) { Text("Abrir configurações de bateria") }
+    }
+}
+
+@Composable
+private fun BenchmarkLink(onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(scheme.primaryContainer.copy(alpha = 0.6f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Outlined.Speed, null, tint = scheme.primary, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Na dúvida? Faça o teste de velocidade", style = MaterialTheme.typography.titleSmall, color = scheme.onPrimaryContainer)
+            Text(
+                "Mede os modelos neste celular e mostra o tempo de cada combinação.",
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onPrimaryContainer.copy(alpha = 0.85f),
+            )
+        }
     }
 }

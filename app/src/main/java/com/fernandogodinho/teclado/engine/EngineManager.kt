@@ -3,6 +3,7 @@ package com.fernandogodinho.teclado.engine
 import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
+import android.os.SystemClock
 import android.util.Log
 import com.fernandogodinho.teclado.core.AppSettings
 import com.fernandogodinho.teclado.core.DeviceProfile
@@ -13,6 +14,7 @@ import com.fernandogodinho.teclado.models.ModelRepository
 import com.fernandogodinho.teclado.models.ModelSpec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -189,6 +191,58 @@ class EngineManager(
                 }.onFailure { Log.w(TAG, "text prewarm failed", it) }
             }
         }
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // Speed test: load a specific model on its own, run [block], free it again
+    // ---------------------------------------------------------------------------------------
+
+    /**
+     * Loads [spec] as a dedicated Whisper engine (the one used for dictation is released first, so
+     * only one model occupies memory), runs [block] and frees it. Returns the load time and the
+     * block's result, or null if the model could not be loaded.
+     */
+    suspend fun <T> withDedicatedSpeech(spec: ModelSpec, block: suspend (SpeechEngine) -> T): Pair<Long, T>? =
+        speechMutex.withLock {
+            releaseSpeechLocked()
+            val started = SystemClock.elapsedRealtime()
+            val handle = withContext(speechDispatcher) {
+                ensureNative()
+                NativeBridge.whisperLoad(models.file(spec).absolutePath, true)
+            }
+            if (handle == 0L) return@withLock null
+            val loadMs = SystemClock.elapsedRealtime() - started
+            val engine = SpeechEngine(handle, spec, speechDispatcher, vadModelPath())
+            try {
+                loadMs to block(engine)
+            } finally {
+                withContext(NonCancellable + speechDispatcher) { NativeBridge.whisperFree(handle) }
+            }
+        }
+
+    /** Same as [withDedicatedSpeech] for a language model. */
+    suspend fun <T> withDedicatedText(spec: ModelSpec, block: suspend (TextEngine) -> T): Pair<Long, T>? =
+        textMutex.withLock {
+            releaseTextLocked()
+            val started = SystemClock.elapsedRealtime()
+            val handle = withContext(textDispatcher) {
+                ensureNative()
+                NativeBridge.llmLoad(models.file(spec).absolutePath, TextEngine.CONTEXT_SIZE, threads)
+            }
+            if (handle == 0L) return@withLock null
+            val loadMs = SystemClock.elapsedRealtime() - started
+            val engine = TextEngine(handle, spec, textDispatcher)
+            try {
+                loadMs to block(engine)
+            } finally {
+                withContext(NonCancellable + textDispatcher) { NativeBridge.llmFree(handle) }
+            }
+        }
+
+    /** Frees both engines and waits until the memory is actually released. */
+    suspend fun releaseAllNow() {
+        speechMutex.withLock { releaseSpeechLocked() }
+        textMutex.withLock { releaseTextLocked() }
     }
 
     /** Marks the engines as used and (re)schedules automatic unloading. */

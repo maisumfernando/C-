@@ -9,6 +9,8 @@ This product includes third-party software and data:
 - Silero VAD model (ggml conversion), MIT License — app/src/main/assets/models/silero-vad.bin
 - Word frequency lists derived from FrequencyWords by Hermit Dave, CC BY-SA 4.0 — app/src/main/assets/dict/
 - Emoji data derived from Unicode emoji-test.txt, Unicode License v3 — app/src/main/assets/emoji.txt
+- Speed-test audio sample: 15 s excerpt of "O Alienista" by Machado de Assis, read by Leni for LibriVox,
+  public domain — app/src/main/assets/benchmark/alienista.wav
 - Bricolage Grotesque, Figtree and JetBrains Mono fonts, SIL Open Font License 1.1 — site/fonts/
 
 AI models are downloaded by the app at the user's request and are not part of this repository:

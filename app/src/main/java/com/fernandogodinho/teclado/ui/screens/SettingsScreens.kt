@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import com.fernandogodinho.teclado.BuildConfig
 import com.fernandogodinho.teclado.R
 import com.fernandogodinho.teclado.core.DictationLanguage
+import com.fernandogodinho.teclado.core.MIN_KEYBOARD_HEIGHT
 import com.fernandogodinho.teclado.core.PolishStyle
 import com.fernandogodinho.teclado.core.OneHandedMode
 import com.fernandogodinho.teclado.core.ThemeMode
@@ -76,6 +77,7 @@ import com.fernandogodinho.teclado.ui.components.SettingsGroup
 import com.fernandogodinho.teclado.ui.components.SwitchRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 
 @Composable
 private fun SettingsPage(title: String, onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
@@ -233,13 +235,24 @@ fun KeyboardSettingsScreen(onBack: () -> Unit) {
             }
             GroupDivider()
             Column(Modifier.padding(16.dp)) {
+                var h by remember(s.keyboardHeight) { mutableFloatStateOf(s.keyboardHeight) }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconBadge(Icons.Outlined.Height)
                     Spacer(Modifier.width(14.dp))
-                    Text("Altura do teclado · ${(s.keyboardHeight * 100).toInt()}%", style = MaterialTheme.typography.bodyLarge)
+                    Text("Altura do teclado · ${(h * 100).roundToInt()}%", style = MaterialTheme.typography.bodyLarge)
                 }
-                var h by remember(s.keyboardHeight) { mutableFloatStateOf(s.keyboardHeight) }
-                Slider(value = h, onValueChange = { h = it }, onValueChangeFinished = { repo.setKeyboardHeight(h) }, valueRange = 0.8f..1.3f)
+                Slider(
+                    value = h,
+                    onValueChange = { h = it },
+                    onValueChangeFinished = { repo.setKeyboardHeight(h) },
+                    valueRange = MIN_KEYBOARD_HEIGHT..1f,
+                    steps = 5,
+                )
+                Text(
+                    "100% é o tamanho completo, ajustado à tela do seu celular. Diminua para um teclado mais compacto.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             GroupDivider()
             SwitchRow("Fileira de números", "Mostra os números acima das letras", s.numberRow) { repo.setNumberRow(it) }

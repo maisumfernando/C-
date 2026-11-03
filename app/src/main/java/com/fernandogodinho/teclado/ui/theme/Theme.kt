@@ -1,11 +1,14 @@
 package com.fernandogodinho.teclado.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -87,7 +90,13 @@ fun TecladoTheme(mode: ThemeMode = ThemeMode.SYSTEM, content: @Composable () -> 
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
-    MaterialTheme(colorScheme = if (dark) Dark else Light, typography = AppTypography, content = content)
+    val scheme = if (dark) Dark else Light
+    MaterialTheme(colorScheme = scheme, typography = AppTypography) {
+        // Without a Surface, Text with no explicit colour falls back to black (LocalContentColor's
+        // default), which made titles unreadable in dark mode. The Surface sets the content colour
+        // for every screen and paints the background behind route transitions.
+        Surface(Modifier.fillMaxSize(), color = scheme.background, contentColor = scheme.onBackground, content = content)
+    }
 }
 
 val MonoLabel = TextStyle(fontSize = 12.sp, letterSpacing = 0.4.sp, fontWeight = FontWeight.Medium)

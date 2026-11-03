@@ -8,6 +8,7 @@ Usage:
 Everything the page needs is served from the site itself: no third-party requests.
 """
 import argparse
+import base64
 import hashlib
 import html
 import json
@@ -22,6 +23,8 @@ OWNER, REPO = "maisumfernando", "C-"
 PAGES_HOST = f"{OWNER}.github.io"
 SOURCE_URL = f"https://github.com/{OWNER}/{REPO}"
 RELEASES_URL = f"{SOURCE_URL}/releases"
+# Fixed-name asset attached to every release by CI: always the newest signed APK.
+LATEST_APK_URL = f"{RELEASES_URL}/latest/download/Teclado-do-Fernando-Godinho.apk"
 WEBSITE = f"https://{PAGES_HOST}/{REPO}/"
 
 
@@ -65,13 +68,14 @@ def render(apk, for_artifact=False):
         size_mb = os.path.getsize(apk) / 1_000_000
         sha = hashlib.sha256(open(apk, "rb").read()).hexdigest()
         apk_name = f"Teclado-do-Fernando-Godinho-{version}.apk"
-        href = f"{WEBSITE}download/{apk_name}" if for_artifact else f"download/{apk_name}"
+        # The preview (artifact) cannot serve the APK itself: it links to the latest GitHub release.
+        href = LATEST_APK_URL if for_artifact else f"download/{apk_name}"
         label = f"Baixar para Android · v{version}"
         short = "Baixar"
         meta = f"{size_mb:.0f} MB · Android 8.0 ou superior · os modelos de IA são baixados pelo app"
     else:
-        sha, apk_name, size_mb = "disponível na próxima versão publicada", None, 0
-        href, label, short = RELEASES_URL, "Baixar para Android", "Baixar"
+        sha, apk_name, size_mb = "publicado com cada versão na página de versões do GitHub", None, 0
+        href, label, short = LATEST_APK_URL, f"Baixar para Android · v{version}", "Baixar"
         meta = "Android 8.0 ou superior · os modelos de IA são baixados pelo app"
     values = {
         "VERSION": version, "SHA256": sha, "DOWNLOAD_HREF": href, "DOWNLOAD_LABEL": label,
@@ -95,6 +99,7 @@ def build_site(out, apk):
     for name in ("styles.css", "app.js", "icon.svg"):
         shutil.copy(os.path.join(SITE, name), os.path.join(out, name))
     shutil.copytree(os.path.join(SITE, "fonts"), os.path.join(out, "fonts"))
+    shutil.copytree(os.path.join(SITE, "img"), os.path.join(out, "img"))
     os.makedirs(os.path.join(out, "catalog"))
     shutil.copy(os.path.join(ROOT, "catalog", "models.json"), os.path.join(out, "catalog", "models.json"))
     notes = "; ".join(releases[0]["items"][:3]) if releases else ""
@@ -114,9 +119,15 @@ def build_artifact(path, apk):
     css = open(os.path.join(SITE, "styles.css"), encoding="utf-8").read()
     js = open(os.path.join(SITE, "app.js"), encoding="utf-8").read()
     icon = open(os.path.join(SITE, "icon.svg"), encoding="utf-8").read()
-    import base64
     icon_uri = "data:image/svg+xml;base64," + base64.b64encode(icon.encode()).decode()
     body = body.replace('src="icon.svg"', f'src="{icon_uri}"').replace('<script src="app.js"></script>', f"<script>{js}</script>")
+    # Screenshots are embedded so the preview is a single self-contained file.
+    def embed(m):
+        name = m.group(1)
+        data = open(os.path.join(SITE, "img", name), "rb").read()
+        mime = {"webp": "image/webp", "svg": "image/svg+xml", "png": "image/png"}[name.rsplit(".", 1)[1]]
+        return f'src="data:{mime};base64,{base64.b64encode(data).decode()}"'
+    body = re.sub(r'src="img/([^"]+)"', embed, body)
     # The preview host serves fonts from Google Fonts; the real site self-hosts them.
     fonts = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800'
              '&family=Figtree:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400..600&display=swap">')

@@ -17,15 +17,16 @@ Ao terminar uma sessão de trabalho, **atualize este arquivo e o diário**.
 
 ## Estado atual
 
-- Versão: veja `version.properties` (1.0.0 na primeira entrega). `versionCode = major*10000 + minor*100 + patch`.
+- Versão: veja `version.properties` (1.0.0 na sessão 1, 1.1.0 na sessão 2). `versionCode = major*10000 + minor*100 + patch`.
 - Pacote Android: `com.fernandogodinho.teclado`. minSdk 26, targetSdk 36, apenas arm64-v8a.
-- **Nunca foi testado em um aparelho real** até a sessão 2: compilado, testes unitários e capturas de tela
-  (Robolectric) passam, mas desempenho real e qualidade dos modelos no celular não foram medidos.
-  Peça ao dono feedback de uso real antes de grandes refatorações.
-- Código publicado no branch `claude/android-keyboard-whisper-dictation-bd4ozi` (o push funcionou na
-  segunda tentativa, depois que o dono liberou o acesso). Releases e site só são publicados quando os
-  secrets de assinatura existem (ver "Publicação"). O dono recebeu o APK 1.0.0 assinado com a chave oficial
-  diretamente na sessão 1, e um arquivo privado com a chave para cadastrar nos secrets.
+- **Primeiro uso real (sessão 2):** o dono instalou o 1.0.0 no Huawei Pura 80 Pro (EMUI) com Whisper Large v3
+  Turbo + Gemma 4 E2B. Funcionou; ele relatou só bugs de interface (corrigidos na 1.1.0). Desempenho medido
+  ainda não foi informado: o novo "Teste de velocidade" serve para isso — peça os números a ele.
+- Branches: sessão 1 em `claude/android-keyboard-whisper-dictation-bd4ozi` (branch padrão do GitHub);
+  sessão 2 em `ccr-ea7b7ccf-yjpxlg`. A CI roda em qualquer branch.
+- **Os secrets de assinatura ainda NÃO existiam no fim da sessão 2** (a CI pulou release e site), por isso o
+  botão de download não funcionava e o GitHub Pages não existe. O dono recebeu na sessão 1 o APK 1.0.0
+  assinado e um arquivo privado com a chave; ele precisa cadastrar os secrets (passo a passo em "Publicação").
 - Prévia da página (artifact privado do dono): https://claude.ai/artifact/3bn2jntjLVTuyY6HojJM2G
 
 ## Estrutura
@@ -41,6 +42,7 @@ app/src/main/java/com/fernandogodinho/teclado/
   core/                           Settings (DataStore), SecureHttp (ÚNICA porta de rede), ProjectInfo,
                                   DeviceProfile (RAM, núcleos grandes), OemTips (Huawei etc.), VocabularyStore
   engine/                         EngineManager (carrega/descarrega modelos), SpeechEngine, TextEngine,
+                                  Benchmark (cálculos puros do teste de velocidade) e BenchmarkRunner,
                                   Prompts (instruções + exemplos de revisão por estilo), TextPolisher,
                                   TextTools/WritingTool (ferramentas de IA), SpokenText (códigos, senhas,
                                   e-mails), TranscriptCleaner (alucinações, limpeza, saneamento)
@@ -52,11 +54,14 @@ app/src/main/java/com/fernandogodinho/teclado/
   models/                         ModelCatalog (embutido + catálogo online validado), ModelRepository,
                                   ModelDownloadWorker (retomável, SHA-256, marcador de verificação)
   updates/UpdateChecker.kt        catálogo de modelos + versão do app (só avisa; nunca instala)
-  ui/                             app de configuração (onboarding, home, modelos, ajustes, vocabulário, sobre)
-app/src/main/assets/              dicionários pt_br/en, emojis, modelo VAD Silero
+  ui/                             app de configuração (onboarding, home, modelos, teste de velocidade, ajustes,
+                                  vocabulário, sobre)
+app/src/main/assets/              dicionários pt_br/en, emojis, modelo VAD Silero, benchmark/alienista.wav
+                                  (15 s de "O Alienista", LibriVox, domínio público, para o teste de velocidade)
 app/src/test, app/src/testDebug   testes JVM e capturas de tela (Roborazzi) em app/build/screenshots/
 catalog/models.json               catálogo online (publicado no site; só ADICIONA modelos)
-site/                             página pública (GitHub Pages). build.py gera _site/ e uma prévia única
+site/                             página pública (GitHub Pages). build.py gera _site/ e uma prévia única;
+                                  img/ tem capturas reais (geradas por make_images.py a partir do Roborazzi)
 CHANGELOG.md                      fonte das "Novidades" do site e das notas de versão
 SECURITY.md                       modelo de ameaças e controles — mantenha atualizado
 third_party/                      submódulos fixados: whisper.cpp v1.9.5, llama.cpp b12068
@@ -91,6 +96,10 @@ cmdline-tools, `platforms;android-36`, `build-tools;36.0.0`, `ndk;28.2.13676358`
   `https://maven-central.storage-download.googleapis.com/maven2/`.
 - Robolectric baixa o android-all: exporte `ROBOLECTRIC_REPO` com o mesmo espelho.
 - `local.properties` com `sdk.dir=/opt/android-sdk` (ignorado pelo git).
+- O AGP também quer `build-tools;35.0.0` (baixe `build-tools_r35_linux.zip` como os outros). O `sdkmanager`
+  novo não grava mais licenças: crie `/opt/android-sdk/licenses/android-sdk-license` com os hashes conhecidos
+  (`24333f8a63b6825ea9c5514f83c2829b004d1fee` etc.), senão o Gradle falha dizendo que a licença não foi aceita.
+- Submódulos: `git submodule update --init --depth 1`.
 
 ```bash
 ./gradlew :app:testReleaseUnitTest               # lógica (dicionário, SpokenText, catálogo, limpeza)
@@ -100,7 +109,10 @@ cmdline-tools, `platforms;android-36`, `build-tools;36.0.0`, `ndk;28.2.13676358`
 GRADLE_USER_HOME=/tmp/gradle-limpo ./gradlew --write-verification-metadata sha256 help :app:assembleRelease :app:testReleaseUnitTest :app:testDebugUnitTest
 #   (copie antes o init script do espelho para /tmp/gradle-limpo/init.d/)
 python3 site/build.py --out _site --apk app/build/outputs/apk/release/app-release.apk
+python3 site/make_images.py      # depois do testDebugUnitTest: atualiza as capturas do site (precisa de Pillow)
+python3 site/build.py --artifact preview.html   # prévia de arquivo único (imagens embutidas)
 ```
+As capturas são renderizadas em `pt-rBR` com 8 GB de RAM simulados (ver `ScreenshotTest`).
 A primeira compilação nativa leva ~5 min (7 variantes de CPU do ggml + KleidiAI baixado do GitHub).
 
 ## Publicação e versões
@@ -113,6 +125,14 @@ A primeira compilação nativa leva ~5 min (7 variantes de CPU do ggml + KleidiA
 3. O app instalado descobre a nova versão por `version.json` e avisa o usuário.
 - Site: `https://maisumfernando.github.io/C-/` (se o repositório for renomeado, atualize `core/ProjectInfo.kt`,
   `site/build.py` e este arquivo). O GitHub Pages precisa estar ativo para o branch `gh-pages`.
+- Download estável: cada release também leva `Teclado-do-Fernando-Godinho.apk` (nome fixo), então
+  `https://github.com/maisumfernando/C-/releases/latest/download/Teclado-do-Fernando-Godinho.apk` sempre
+  baixa a versão mais nova. A prévia (artifact) e o README usam esse link; o site usa a cópia em `download/`.
+- O site é republicado quando sai uma versão nova, no branch padrão ou por execução manual.
+- **Cadastrar os secrets (dono):** GitHub → repositório → Settings → Secrets and variables → Actions →
+  New repository secret: `TECLADO_KEYSTORE_BASE64` (o conteúdo do arquivo .p12 em base64, do arquivo privado
+  da sessão 1) e `TECLADO_KEYSTORE_PASSWORD`. Depois: Actions → última execução → Re-run all jobs. Por fim,
+  Settings → Pages → Deploy from a branch → `gh-pages` / root.
 
 ## Atualizar modelos (sem nova versão do app)
 
@@ -133,12 +153,22 @@ Para mudar a recomendação padrão ou a lista embutida, edite `ModelCatalog.kt`
 - Sem composing text: o teclado comita direto e acompanha a palavra atual; menos bugs em apps diversos.
 - Prompt de revisão com exemplos por estilo; o prefixo fica em cache (KV/snapshot), então só a fala é processada.
 - Saída da IA validada; se suspeita, usa a limpeza por regras (`TranscriptCleaner.basicPolish`).
-- Segurar espaço = ditado rápido; segurar emoji = trocar de teclado.
+- Segurar espaço = ditado rápido; segurar emoji = trocar de teclado. A dica "Ouvindo… solte para inserir"
+  depende de `quickHolding` (só enquanto o dedo está na tecla); depois o progresso aparece na barra.
+- Altura do teclado: 100% = tamanho máximo e padrão (escala 70–100%, chave `keyboard_height_v2`). A altura
+  cheia de cada fileira acompanha a tela (`fullRowHeight`: 6,6% da altura, entre 52 e 64 dp; paisagem menor).
+- Tema do app: `TecladoTheme` envolve tudo num `Surface` (sem ele, Text sem cor saía preto no modo escuro).
+- Teste de velocidade: um modelo carregado por vez (`withDedicatedSpeech/Text`), áudio e ditado fixos,
+  precisão = 1 − WER contra o texto de referência. O tempo de espera simula os cortes nas pausas (~8 s) e
+  soma a revisão (leitura + escrita em tokens/s). Modelos não baixados são estimados a partir do medido mais
+  parecido (`BenchmarkMath.relativeCost`). Resultados em `files/benchmark.json`.
 - UI do app e do teclado está em português direto no código (Compose). Só o nome do app é traduzido.
 
 ## Ideias e pendências (backlog)
 
-- Testar em aparelhos reais (Samsung, Huawei Pura 80 Pro/EMUI 15, celulares de 3–4 GB) e ajustar tempos.
+- Pedir ao dono os números do "Teste de velocidade" no Pura 80 Pro e calibrar `relativeCost`, os segmentos
+  e as recomendações de `ModelCatalog.recommended` com dados reais (e de celulares de 3–4 GB).
+- Testar em outros aparelhos (Samsung, celulares simples) e ajustar tempos.
 - Medir a qualidade da revisão de cada LLM com frases reais; ajustar `Prompts.kt`.
 - Traduzir a interface (mover textos para `strings.xml`).
 - Digitação por deslize (swipe typing), layouts de outros idiomas, armeabi-v7a.

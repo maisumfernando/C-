@@ -51,3 +51,39 @@ atualização dos modelos; nome "Teclado do Fernando Godinho" traduzido em todos
 1. Confirmar que o push funcionou e que os secrets de assinatura foram criados; ver a primeira release e o site.
 2. Confirmar que o GitHub Pages está ativo para o branch `gh-pages`.
 3. Coletar feedback de uso real (velocidade, qualidade da revisão, bugs em apps específicos).
+
+## Sessão 2 — 2026-11-03 — primeiro uso real e versão 1.1.0
+
+**Pedido (com capturas do Huawei Pura 80 Pro):** altura do teclado começar em 100%; textos escuros ilegíveis no
+modo escuro; a mensagem "Ouvindo… solte para inserir" continuava na barra de espaço depois de soltar; um teste
+de velocidade dos modelos e das combinações (ex.: Whisper Base + Qwen 4B, Turbo + Gemma) com o tempo por
+quantidade de palavras; o botão de download do site não baixava nada; site mais bonito, com capturas de tela.
+
+**Diagnóstico:**
+- Modo escuro: as telas não tinham `Surface`, então `Text` sem cor usava o preto padrão de `LocalContentColor`.
+- Barra de espaço: o rótulo dependia de `quickDictation`, que só volta a falso quando o texto é inserido.
+- Download: a CI compilou, mas os secrets de assinatura não existem, então não houve release nem site
+  (gh-pages inexistente, Pages 404). A prévia apontava para um APK no Pages que nunca foi publicado.
+
+**Feito:**
+- Tema com `Surface` (app) e `LocalContentColor` no teclado; capturas novas em modo escuro para conferir.
+- Altura: nova escala 70–100% (100% = máximo e padrão), altura cheia adaptada à tela, chave nova para todos
+  começarem em 100%.
+- `quickHolding` + fase da sessão controlam a dica da barra de espaço; gesto interrompido também finaliza.
+- Teste de velocidade (Início → "Teste de velocidade", e atalho em Modelos): mede cada modelo instalado com
+  um trecho de 15 s de "O Alienista" (LibriVox, domínio público) e um ditado bagunçado de 55 palavras; mostra
+  espera estimada para 15/50/150 palavras por combinação, precisão do Whisper, palavras/s do LLM, saídas para
+  comparar qualidade, selos "Mais rápida / Melhor qualidade / Equilíbrio", estimativa de modelos não
+  baixados e botão "Usar esta combinação". 9 testes novos (`BenchmarkTest`).
+- Site refeito: herói com celular e teclado real ditando, diagrama "dentro do seu celular", galeria com 8
+  capturas, recursos com mini-ilustrações, seção do teste de velocidade, telas do app, lista de endereços
+  permitidos, faixas de memória, instalação com QR code. Download aponta para
+  `releases/latest/download/Teclado-do-Fernando-Godinho.apk` (a CI agora anexa esse nome fixo).
+- CI roda em qualquer branch; site só é republicado em versão nova, branch padrão ou execução manual.
+- Versão 1.1.0, CHANGELOG, README, NOTICE (crédito do áudio), SECURITY (benchmark.json).
+
+**Pendências:**
+1. O dono precisa cadastrar os secrets e reexecutar a CI deste branch (passo a passo no CLAUDE.md) para
+   publicar a release 1.1.0 e o site; depois ativar o Pages no branch `gh-pages`.
+2. Pedir os resultados do teste de velocidade no Pura 80 Pro para calibrar estimativas e recomendações.
+3. Considerar unir este branch ao branch padrão (PR) quando o dono quiser.

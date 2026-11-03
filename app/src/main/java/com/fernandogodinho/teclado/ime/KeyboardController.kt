@@ -101,6 +101,9 @@ class KeyboardController(
     /** True while dictating by holding the space bar (the keyboard stays visible). */
     var quickDictation by mutableStateOf(false)
         private set
+    /** True only while the finger is still on the space bar; false once released (text being prepared). */
+    var quickHolding by mutableStateOf(false)
+        private set
     private var dismissedPaste: String? = null
     var lastRevision by mutableStateOf<Revision?>(null)
         private set
@@ -877,6 +880,7 @@ class KeyboardController(
         lastDictation = null
         pasteChip = null
         quickDictation = quick
+        quickHolding = quick
         dictation = session
         panel = if (quick) Panel.KEYBOARD else Panel.DICTATION
         session.start()
@@ -891,6 +895,7 @@ class KeyboardController(
     }
 
     fun finishDictation() {
+        quickHolding = false
         dictation?.finish()
     }
 
@@ -898,6 +903,7 @@ class KeyboardController(
         dictation?.cancel()
         dictation = null
         quickDictation = false
+        quickHolding = false
         panel = Panel.KEYBOARD
         updateAutoCaps()
     }
@@ -908,6 +914,7 @@ class KeyboardController(
         if (text.isEmpty()) {
             dictation = null
             quickDictation = false
+            quickHolding = false
             panel = Panel.KEYBOARD
             showNotice("Não ouvi nada. Tente falar mais perto do microfone.")
             return
@@ -916,6 +923,7 @@ class KeyboardController(
             session.mode == DictationMode.INSTRUCTION -> {
                 dictation = null
                 quickDictation = false
+                quickHolding = false
                 runTool(WritingTool.CUSTOM, instruction = text)
             }
             // Passwords are always confirmed on screen (masked) before they go into the field.
@@ -934,6 +942,7 @@ class KeyboardController(
         val text = if (original) raw else polished
         dictation = null
         quickDictation = false
+        quickHolding = false
         panel = Panel.KEYBOARD
         if (ic == null || text.isEmpty()) return
         val inserted = if (mode == DictationMode.TEXT) adaptToContext(ic, text) else text

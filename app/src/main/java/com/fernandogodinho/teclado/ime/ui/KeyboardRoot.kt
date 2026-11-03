@@ -41,6 +41,7 @@ import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -59,6 +60,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fernandogodinho.teclado.core.OneHandedMode
@@ -77,6 +80,20 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val PopupSpace = 40.dp
+
+/**
+ * Row height at 100%: grows with the screen so tall phones (e.g. 20:9 and taller) get a keyboard
+ * as comfortable as the system ones, while small screens and landscape keep room for the app.
+ */
+internal fun fullRowHeight(config: Configuration): Dp {
+    val h = config.screenHeightDp.toFloat()
+    val dp = if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        (h * 0.105f).coerceIn(36f, 50f)
+    } else {
+        (h * 0.066f).coerceIn(52f, 64f)
+    }
+    return dp.dp
+}
 private val ToolbarHeight = 46.dp
 
 @Composable
@@ -101,11 +118,11 @@ fun KeyboardRoot(service: TecladoIme, controller: KeyboardController) {
         }
     }
     val baseRows = if (settings.numberRow) 5 else 4
-    val rowHeight: Dp = (if (settings.numberRow) 50.dp else 55.dp) * settings.keyboardHeight
+    val rowHeight: Dp = fullRowHeight(LocalConfiguration.current) * (if (settings.numberRow) 0.9f else 1f) * settings.keyboardHeight
     val keysArea = rowHeight * baseRows
     val gridRowHeight = keysArea / layout.rows.size
 
-    CompositionLocalProvider(LocalKeyboardColors provides colors) {
+    CompositionLocalProvider(LocalKeyboardColors provides colors, LocalContentColor provides colors.text) {
         Column(Modifier.fillMaxWidth()) {
             Spacer(Modifier.height(PopupSpace))
             Column(

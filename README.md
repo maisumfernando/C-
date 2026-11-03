@@ -4,7 +4,8 @@ Teclado completo para Android em que você **fala** e recebe um **texto revisado
 O Whisper transcreve a voz e um modelo de linguagem revisa o texto, os dois rodando **no próprio celular**:
 nada do que você diz ou digita vai para servidor nenhum.
 
-**Site e download:** https://maisumfernando.github.io/C-/
+**Site:** https://maisumfernando.github.io/C-/ ·
+**Baixar o APK mais recente:** https://github.com/maisumfernando/C-/releases/latest/download/Teclado-do-Fernando-Godinho.apk
 
 ## Destaques
 
@@ -17,6 +18,8 @@ nada do que você diz ou digita vai para servidor nenhum.
   traduzir, ou um comando falado.
 - **Teclado completo:** acentos no toque longo, ç, sugestões e autocorreção em português, emojis,
   área de transferência, colar inteligente, modo uma mão, temas claro e escuro.
+- **Teste de velocidade:** mede os modelos no seu celular e mostra o tempo de espera de cada combinação
+  (voz + revisão) para textos de 15, 50 e 150 palavras.
 - **Modelos que se atualizam**, sempre conferidos por SHA-256.
 - Funciona na maioria dos Androids (8.0+, 64 bits), inclusive Huawei/Honor com EMUI.
 

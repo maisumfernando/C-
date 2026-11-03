@@ -5,7 +5,9 @@ name: Build, release and publish
 # website (GitHub Pages, gh-pages branch) is updated with the new download.
 on:
   push:
-    branches: ["claude/android-keyboard-whisper-dictation-bd4ozi", "main", "master"]
+    # Every branch is built and tested. Publishing still needs the signing secrets (which only
+    # the owner can create) and a version that has not been released yet.
+    branches: ["**"]
     # Documentation-only changes do not need a new build.
     paths-ignore: ["CLAUDE.md", "README.md", "SECURITY.md", "docs/**", "fastlane/**"]
   workflow_dispatch:
@@ -91,6 +93,9 @@ jobs:
           NAME="Teclado-do-Fernando-Godinho-${{ steps.version.outputs.version }}.apk"
           cp app/build/outputs/apk/release/app-release.apk "$NAME"
           sha256sum "$NAME" | tee "$NAME.sha256"
+          # Same file under a fixed name: .../releases/latest/download/Teclado-do-Fernando-Godinho.apk
+          # always points to the newest version (used by the site's download buttons).
+          cp "$NAME" Teclado-do-Fernando-Godinho.apk
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
 
       - name: Upload build artifact
@@ -126,13 +131,15 @@ jobs:
           files: |
             ${{ steps.apk.outputs.name }}
             ${{ steps.apk.outputs.name }}.sha256
+            Teclado-do-Fernando-Godinho.apk
 
+      # The site is republished with each new release, and on the default branch (catalog updates).
       - name: Build website
-        if: env.HAS_SIGNING_SECRET == 'true'
+        if: env.HAS_SIGNING_SECRET == 'true' && (steps.version.outputs.released == 'false' || github.ref_name == github.event.repository.default_branch || github.event_name == 'workflow_dispatch')
         run: python3 site/build.py --out _site --apk "${{ steps.apk.outputs.name }}"
 
       - name: Publish website (gh-pages)
-        if: env.HAS_SIGNING_SECRET == 'true'
+        if: env.HAS_SIGNING_SECRET == 'true' && (steps.version.outputs.released == 'false' || github.ref_name == github.event.repository.default_branch || github.event_name == 'workflow_dispatch')
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

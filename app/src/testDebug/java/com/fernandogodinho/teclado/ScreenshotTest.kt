@@ -1,5 +1,6 @@
 package com.fernandogodinho.teclado
 
+import android.app.ActivityManager
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.background
@@ -14,24 +15,31 @@ import com.fernandogodinho.teclado.dictation.DictationMode
 import com.fernandogodinho.teclado.dictation.DictationPhase
 import com.fernandogodinho.teclado.dictation.DictationSession
 import com.fernandogodinho.teclado.dictation.DictationUiState
+import com.fernandogodinho.teclado.engine.BenchmarkReport
+import com.fernandogodinho.teclado.engine.SpeechBench
+import com.fernandogodinho.teclado.engine.TextBench
 import com.fernandogodinho.teclado.ime.TecladoIme
 import com.fernandogodinho.teclado.ime.KeyboardController
 import com.fernandogodinho.teclado.ime.ShiftState
 import com.fernandogodinho.teclado.ime.Suggestion
 import com.fernandogodinho.teclado.ime.ui.KeyboardRoot
 import com.fernandogodinho.teclado.ui.SetupState
+import com.fernandogodinho.teclado.ui.screens.BenchmarkScreen
 import com.fernandogodinho.teclado.ui.screens.DictationSettingsScreen
+import com.fernandogodinho.teclado.ui.screens.KeyboardSettingsScreen
 import com.fernandogodinho.teclado.ui.screens.HomeScreen
 import com.fernandogodinho.teclado.ui.screens.ModelsScreen
 import com.fernandogodinho.teclado.ui.screens.OnboardingScreen
 import com.fernandogodinho.teclado.ui.theme.TecladoTheme
 import com.github.takahirom.roborazzi.captureRoboImage
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.math.abs
@@ -40,11 +48,18 @@ import kotlin.math.sin
 /** Renders the main screens to build/screenshots for visual review. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w411dp-h891dp-xxhdpi")
+@Config(sdk = [35], qualifiers = "pt-rBR-w411dp-h891dp-xxhdpi")
 class ScreenshotTest {
 
     @get:Rule
     val compose = createComposeRule()
+
+    @Before
+    fun typicalPhone() {
+        // An 8 GB phone, so recommendations and warnings look like they do on a real device.
+        val am = RuntimeEnvironment.getApplication().getSystemService(ActivityManager::class.java)
+        Shadows.shadowOf(am).setMemoryInfo(ActivityManager.MemoryInfo().apply { totalMem = 8L * 1024 * 1024 * 1024 })
+    }
 
     private fun shot(name: String) = compose.onRoot().captureRoboImage("build/screenshots/$name.png")
 
@@ -134,12 +149,69 @@ class ScreenshotTest {
         compose.setContent {
             TecladoTheme {
                 HomeScreen(
-                    setup = SetupState(enabled = true, selected = true, micGranted = true, speechModelReady = false, textModelReady = false),
+                    setup = SetupState(enabled = true, selected = true, micGranted = true, speechModelReady = true, textModelReady = true),
                     navigate = {}, onEnable = {}, onSelect = {}, onMic = {},
                 )
             }
         }
         shot("app_home")
+    }
+
+    @Test
+    fun homeDark() {
+        RuntimeEnvironment.setQualifiers("+night")
+        compose.setContent {
+            TecladoTheme {
+                HomeScreen(
+                    setup = SetupState(enabled = true, selected = true, micGranted = true, speechModelReady = true, textModelReady = true),
+                    navigate = {}, onEnable = {}, onSelect = {}, onMic = {},
+                )
+            }
+        }
+        shot("app_home_dark")
+    }
+
+    @Test
+    fun keyboardSettingsDark() {
+        RuntimeEnvironment.setQualifiers("+night")
+        compose.setContent { TecladoTheme { KeyboardSettingsScreen(onBack = {}) } }
+        shot("app_keyboard_settings_dark")
+    }
+
+    // Illustrative numbers for the screenshot only (not a real measurement).
+    private fun sampleReport() = BenchmarkReport(
+        createdAt = 1_793_000_000_000L,
+        device = "Celular de exemplo",
+        ramGb = 8.0,
+        threads = 4,
+        appVersion = "1.1.0",
+        speech = listOf(
+            SpeechBench("whisper-base-q8", 310, 1_150, 15_400, "As crônicas da vila de Itaguaí dizem que em tempos remotos vivera ali um certo médico, o doutor Simão Bacamarte, filho da nobreza da terra e o maior dos médicos do Brasil, de Portugal e das Espanhas.", 0.89),
+            SpeechBench("whisper-large-v3-turbo-q5", 1_900, 9_800, 15_400, "As crônicas da vila de Itaguaí dizem que, em tempos remotos, vivera ali um certo médico, o doutor Simão Bacamarte, filho da nobreza da terra e o maior dos médicos do Brasil, de Portugal e das Espanhas.", 1.0),
+        ),
+        text = listOf(
+            TextBench("gemma-4-e2b-q4", 2_400, 5_100, 55, 82, 64, 900, 6_300, "A reunião de amanhã será às 16h. Peço que cada um traga os números do mês, pois o diretor vai querer ver tudo. Quem não puder comparecer, por favor, avise-me até hoje à noite."),
+        ),
+    )
+
+    // Taller screen so the website can show the results below the intro.
+    @Test
+    @Config(qualifiers = "pt-rBR-w411dp-h1100dp-xxhdpi")
+    fun benchmark() {
+        val app = RuntimeEnvironment.getApplication() as TecladoApp
+        app.benchmark.showPreview(sampleReport())
+        compose.setContent { TecladoTheme { BenchmarkScreen(onBack = {}, onModels = {}) } }
+        shot("app_benchmark")
+    }
+
+    @Test
+    @Config(qualifiers = "pt-rBR-w411dp-h1100dp-xxhdpi")
+    fun benchmarkDark() {
+        RuntimeEnvironment.setQualifiers("+night")
+        val app = RuntimeEnvironment.getApplication() as TecladoApp
+        app.benchmark.showPreview(sampleReport())
+        compose.setContent { TecladoTheme { BenchmarkScreen(onBack = {}, onModels = {}) } }
+        shot("app_benchmark_dark")
     }
 
     @Test

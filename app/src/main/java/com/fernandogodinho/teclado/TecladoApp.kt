@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import com.fernandogodinho.teclado.core.SettingsRepository
 import com.fernandogodinho.teclado.core.VocabularyStore
+import com.fernandogodinho.teclado.engine.BenchmarkRunner
 import com.fernandogodinho.teclado.engine.EngineManager
 import com.fernandogodinho.teclado.models.ModelRepository
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,8 @@ class TecladoApp : Application() {
         private set
     lateinit var updates: UpdateChecker
         private set
+    /** On-device speed test of the installed models (created on first use). */
+    val benchmark: BenchmarkRunner by lazy { BenchmarkRunner(this, engines, models, appScope) }
 
     override fun onCreate() {
         super.onCreate()

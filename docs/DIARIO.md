@@ -146,3 +146,17 @@ posição + frequência, índice por primeira/última tecla, acentos e ç), rast
 palavra inserida com espaço automático, alternativas na barra (tocar troca a palavra), apagar remove a palavra
 inteira, ajuste "Digitação por deslize" (ligado por padrão). Teste com deslizes simulados com ruído:
 97,9% de acerto em 1º lugar e 100% entre os 3 primeiros em 96 palavras frequentes. Precisa de teste real.
+
+## Sessão 3 — 2026-11-03 — união dos branches
+
+**Pedido:** continuar a partir do branch `ccr-ea7b7ccf-yjpxlg` (1.2.0 + deslize).
+
+**Feito:** o commit do modo privado existia só num branch paralelo (feito a partir da 1.0.0). Ele foi
+reaplicado sobre a 1.2.0 no branch `ccr-df405e2e-dciwx8`: ajuste `autoPrivateApps` ao lado de trackpad e
+deslize (o antigo `holdSpaceToDictate` continua removido), `applyPrivacy` mantendo a regra de não fechar
+painéis no mesmo campo, botão de óculos na barra junto de "Respostas salvas" e "Escrever com calma", cartão
+"Modo privado automático" no site novo, item na seção 1.2.0 do CHANGELOG. Em modo privado também ficam
+desligados os atalhos inteligentes, o aviso de dados sensíveis e o editor "Escrever com calma" (já usavam
+`privateField`). Testes JVM e capturas passam.
+
+**Pendências:** as mesmas da sessão 2 (secrets de assinatura, Pages, teste real de TV, deslize e modo privado).

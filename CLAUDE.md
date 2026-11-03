@@ -23,7 +23,8 @@ Ao terminar uma sessão de trabalho, **atualize este arquivo e o diário**.
   Turbo + Gemma 4 E2B. Funcionou; ele relatou só bugs de interface (corrigidos na 1.1.0). Desempenho medido
   ainda não foi informado: o novo "Teste de velocidade" serve para isso — peça os números a ele.
 - Branches: sessão 1 em `claude/android-keyboard-whisper-dictation-bd4ozi` (branch padrão do GitHub);
-  sessão 2 em `ccr-ea7b7ccf-yjpxlg`. A CI roda em qualquer branch.
+  sessão 2 em `ccr-ea7b7ccf-yjpxlg`; sessão 3 em `ccr-df405e2e-dciwx8` (= sessão 2 + modo privado, que tinha
+  ficado num branch paralelo e foi reaplicado por cima da 1.2.0). A CI roda em qualquer branch.
 - **Os secrets de assinatura ainda NÃO existiam no fim da sessão 2** (a CI pulou release e site), por isso o
   botão de download não funcionava e o GitHub Pages não existe. O dono recebeu na sessão 1 o APK 1.0.0
   assinado e um arquivo privado com a chave; ele precisa cadastrar os secrets (passo a passo em "Publicação").
@@ -31,7 +32,8 @@ Ao terminar uma sessão de trabalho, **atualize este arquivo e o diário**.
 - O envio do APK como anexo no chat do Claude falhou no celular do dono: entregue sempre por link
   (site no GitHub Pages ou release do GitHub).
 - Modo privado: `ime/PrivacyMode.kt` (lista de apps) + `KeyboardController.applyPrivacy`. Sites não são
-  detectáveis por teclados no Android; abas anônimas são, pela flag do campo.
+  detectáveis por teclados no Android; abas anônimas são, pela flag do campo. `privateField` = qualquer motivo
+  de privacidade (sem aprendizado/histórico); `secureField` = só senha (aí também sem sugestões nem IA).
 
 ## Estrutura
 

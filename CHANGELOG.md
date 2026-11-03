@@ -12,6 +12,7 @@ Cada seção abaixo vira a lista de "Novidades" no site e na página de versões
 - Calculadora e conversor de unidades na barra do teclado (“12,5 × 3 =”, “10 km em milhas”), lembretes e timers (“/lembrete amanhã às 8h …”), domínios de e-mail e aviso ao enviar número de cartão, CPF ou CNPJ.
 - Editor “Escrever com calma” para mensagens longas, que devolve o texto ao app de origem.
 - Ferramentas de IA com prévia antes de alterar o texto e novas opções: mais claro, mais simples, descontraído, assertivo, profissional, expandir anotações, resumir, sugerir resposta, perguntas sem resposta, ambiguidades, coerência e sinônimos.
+- Modo privado automático em abas anônimas e em apps de privacidade (Firefox Focus, DuckDuckGo, Tor, Signal, gerenciadores de senha), com símbolo de óculos no teclado e botão para ligar em qualquer app.
 - Página “Apoie o projeto”, com a chave Pix para contribuições.
 - Correções: os painéis não fecham mais quando o app reinicia o campo; o texto ditado também passa pelo alerta de dados sensíveis.
 

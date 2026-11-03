@@ -28,6 +28,10 @@ Ao terminar uma sessão de trabalho, **atualize este arquivo e o diário**.
   botão de download não funcionava e o GitHub Pages não existe. O dono recebeu na sessão 1 o APK 1.0.0
   assinado e um arquivo privado com a chave; ele precisa cadastrar os secrets (passo a passo em "Publicação").
 - Prévia da página (artifact privado do dono): https://claude.ai/artifact/3bn2jntjLVTuyY6HojJM2G
+- O envio do APK como anexo no chat do Claude falhou no celular do dono: entregue sempre por link
+  (site no GitHub Pages ou release do GitHub).
+- Modo privado: `ime/PrivacyMode.kt` (lista de apps) + `KeyboardController.applyPrivacy`. Sites não são
+  detectáveis por teclados no Android; abas anônimas são, pela flag do campo.
 
 ## Estrutura
 

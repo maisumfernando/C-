@@ -52,6 +52,30 @@ atualização dos modelos; nome "Teclado do Fernando Godinho" traduzido em todos
 2. Confirmar que o GitHub Pages está ativo para o branch `gh-pages`.
 3. Coletar feedback de uso real (velocidade, qualidade da revisão, bugs em apps específicos).
 
+## Sessão 1 (continuação 2) — download e modo privado
+
+**Pedido:** o download do APK enviado pelo chat falhava no celular; manter o nome "Teclado do Fernando
+Godinho"; modo privado automático em apps de privacidade (Firefox Focus, DuckDuckGo…) e em sites adultos,
+com símbolo de privacidade ao fundo como no SwiftKey; avisar quando for hora de abrir uma nova sessão.
+
+**Feito:**
+- Modo privado (`ime/PrivacyMode.kt`, `KeyboardController.applyPrivacy/togglePrivateMode`): liga sozinho em
+  senhas, abas anônimas (flag `IME_FLAG_NO_PERSONALIZED_LEARNING`) e numa lista de apps de privacidade
+  (navegadores de privacidade, mensageiros seguros, gerenciadores de senha, Proton/Tuta); botão de óculos
+  na barra para ligar manualmente; marca d'água de incógnito sobre as teclas (`ime/ui/PrivacyVisuals.kt`);
+  ajuste "Modo privado automático". Em modo privado: nada aprendido, sem histórico de cópias, sem emojis
+  recentes, sem prévia de tecla; sugestões do dicionário e ferramentas de IA continuam (só senhas as bloqueiam).
+- Sites adultos: o Android não informa ao teclado o site aberto; documentado no app, no site e no SECURITY.md.
+- CI: a primeira execução falhou na verificação de dependências (cache local escondia 3 BOMs); corrigido
+  regerando com cache vazio. Execução #2 passou (testes + APK).
+- APK 1.0.0 recompilado e assinado com a chave oficial; site gerado com download direto.
+
+**Pendências:**
+1. Publicar o site (branch `gh-pages`) e/ou cadastrar os secrets `TECLADO_KEYSTORE_BASE64` e
+   `TECLADO_KEYSTORE_PASSWORD` para a CI publicar release + site automaticamente.
+2. Confirmar que o GitHub Pages está ativo (Settings → Pages → branch `gh-pages`).
+3. Feedback de uso real no celular (Huawei Pura 80 Pro do dono).
+
 ## Sessão 2 — 2026-11-03 — primeiro uso real e versão 1.1.0
 
 **Pedido (com capturas do Huawei Pura 80 Pro):** altura do teclado começar em 100%; textos escuros ilegíveis no

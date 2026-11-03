@@ -336,4 +336,19 @@ class ScreenshotTest {
         app.settings.setOneHanded(com.fernandogodinho.teclado.core.OneHandedMode.OFF)
         Thread.sleep(300)
     }
+
+    @Test
+    fun keyboardPrivateDark() {
+        RuntimeEnvironment.setQualifiers("+night")
+        keyboard { c, _ ->
+            c.onStartInput(
+                EditorInfo().apply {
+                    inputType = InputType.TYPE_CLASS_TEXT
+                    imeOptions = EditorInfo.IME_ACTION_GO or EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
+                    packageName = "org.mozilla.focus"
+                },
+            )
+        }
+        shot("keyboard_private_dark")
+    }
 }

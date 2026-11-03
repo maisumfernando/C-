@@ -88,6 +88,7 @@ data class AppSettings(
     val spaceTrackpad: Boolean = true,
     /** Slide over the letters to write a word (swipe / gesture typing). */
     val swipeTyping: Boolean = true,
+    val autoPrivateApps: Boolean = true,
     val adaptToneToApp: Boolean = false,
     val oneHanded: OneHandedMode = OneHandedMode.OFF,
     // TV
@@ -134,6 +135,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val learnWords = booleanPreferencesKey("learn_words")
         val spaceTrackpad = booleanPreferencesKey("space_trackpad")
         val swipeTyping = booleanPreferencesKey("swipe_typing")
+        val autoPrivate = booleanPreferencesKey("auto_private_apps")
         val adaptTone = booleanPreferencesKey("adapt_tone_to_app")
         val oneHanded = stringPreferencesKey("one_handed")
         val checkUpdates = booleanPreferencesKey("check_updates")
@@ -179,6 +181,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
     fun setLearnWords(v: Boolean) = update { it[K.learnWords] = v }
     fun setSpaceTrackpad(v: Boolean) = update { it[K.spaceTrackpad] = v }
     fun setSwipeTyping(v: Boolean) = update { it[K.swipeTyping] = v }
+    fun setAutoPrivateApps(v: Boolean) = update { it[K.autoPrivate] = v }
     fun setAdaptToneToApp(v: Boolean) = update { it[K.adaptTone] = v }
     fun setOneHanded(v: OneHandedMode) = update { it[K.oneHanded] = v.name }
     fun setCheckUpdates(v: Boolean) = update { it[K.checkUpdates] = v }
@@ -224,6 +227,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             learnWords = this[K.learnWords] ?: d.learnWords,
             spaceTrackpad = this[K.spaceTrackpad] ?: d.spaceTrackpad,
             swipeTyping = this[K.swipeTyping] ?: d.swipeTyping,
+            autoPrivateApps = this[K.autoPrivate] ?: d.autoPrivateApps,
             adaptToneToApp = this[K.adaptTone] ?: d.adaptToneToApp,
             oneHanded = enumOr(this[K.oneHanded], d.oneHanded),
             checkUpdates = this[K.checkUpdates] ?: d.checkUpdates,

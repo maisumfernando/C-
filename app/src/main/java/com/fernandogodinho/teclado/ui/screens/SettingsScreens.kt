@@ -344,6 +344,13 @@ fun KeyboardSettingsScreen(onBack: () -> Unit) {
         SectionTitle("Privacidade ao digitar")
         SettingsGroup {
             SwitchRow(
+                "Modo privado automático",
+                "Liga sozinho em abas anônimas de qualquer navegador e em apps de privacidade (Firefox Focus, DuckDuckGo, Tor, Signal, gerenciadores de senha…). " +
+                    "Nele, nada é aprendido nem guardado. Para outros apps e sites, use o botão de óculos na barra do teclado.",
+                s.autoPrivateApps,
+            ) { repo.setAutoPrivateApps(it) }
+            GroupDivider()
+            SwitchRow(
                 "Aprender palavras novas",
                 "Guarda no aparelho as palavras que você mantém. Nunca em campos de senha ou abas anônimas.",
                 s.learnWords,

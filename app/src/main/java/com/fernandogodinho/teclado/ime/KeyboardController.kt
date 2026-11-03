@@ -98,6 +98,10 @@ class KeyboardController(
      */
     var privateField by mutableStateOf(false)
         private set
+    var privateReason by mutableStateOf(PrivateReason.NONE)
+        private set
+    /** Private mode switched on by the user with the toolbar button (kept until switched off). */
+    private var manualPrivate = false
     /** Password fields: the keyboard window is also protected from screenshots and recording. */
     val secureField: Boolean get() = fieldKind == FieldKind.PASSWORD
     var enterKind by mutableStateOf(EnterKind.NEWLINE)
@@ -205,9 +209,7 @@ class KeyboardController(
             else -> LayoutMode.LETTERS
         }
         enterKind = enterKindFor(info)
-        privateField = fieldKind == FieldKind.PASSWORD ||
-            (info.imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING) != 0
-        clipboard.paused = privateField
+        applyPrivacy(info)
         if (!sameField) {
             if (panel != Panel.DICTATION) panel = Panel.KEYBOARD
             toolResult = null
@@ -223,6 +225,36 @@ class KeyboardController(
         updateAutoCaps()
         refreshPasteChip()
         deliverComposerText(info)
+    }
+
+    /** Decides whether this field is private: passwords, incognito tabs, privacy apps or the user's toggle. */
+    private fun applyPrivacy(info: EditorInfo) {
+        privateReason = when {
+            fieldKind == FieldKind.PASSWORD -> PrivateReason.PASSWORD
+            (info.imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING) != 0 -> PrivateReason.INCOGNITO
+            settings.autoPrivateApps && PrivacyApps.matches(info.packageName) -> PrivateReason.PRIVACY_APP
+            manualPrivate -> PrivateReason.MANUAL
+            else -> PrivateReason.NONE
+        }
+        privateField = privateReason != PrivateReason.NONE
+        clipboard.paused = privateField
+        if (privateField) pasteChip = pasteChip?.takeIf { codeLikeField() }
+    }
+
+    /** Toolbar button: private mode on/off, like the incognito switch of other keyboards. */
+    fun togglePrivateMode() {
+        val automatic = privateReason == PrivateReason.PASSWORD || privateReason == PrivateReason.INCOGNITO ||
+            privateReason == PrivateReason.PRIVACY_APP
+        if (automatic && !manualPrivate) {
+            showNotice("Modo privado automático: ${privateReason.label.lowercase()}")
+            return
+        }
+        manualPrivate = !manualPrivate
+        editorInfo?.let { applyPrivacy(it) }
+        showNotice(
+            if (manualPrivate) "Modo privado ligado: nada do que você digitar será aprendido ou guardado"
+            else "Modo privado desligado",
+        )
     }
 
     fun onFinishInput() {
@@ -621,7 +653,7 @@ class KeyboardController(
         }
         val typed = word.toString()
         if (typed.isNotEmpty()) pasteChip = null
-        if (typed.isEmpty() || !settings.suggestions || privateField || layoutMode != LayoutMode.LETTERS) {
+        if (typed.isEmpty() || !settings.suggestions || secureField || layoutMode != LayoutMode.LETTERS) {
             suggestions = emptyList()
             return
         }
@@ -758,8 +790,8 @@ class KeyboardController(
 
     /** Opens the writing tools for the selected text, or for the whole field. */
     fun openWritingTools() {
-        if (privateField) {
-            showNotice("As ferramentas de IA ficam desligadas em campos privados")
+        if (secureField) {
+            showNotice("As ferramentas de IA ficam desligadas em campos de senha")
             return
         }
         if (app.engines.selectedTextModel() == null) {
@@ -784,7 +816,7 @@ class KeyboardController(
     fun runTool(tool: WritingTool, instruction: String? = null) {
         val ic = ic ?: return
         panel = Panel.KEYBOARD
-        if (privateField) return
+        if (secureField) return
         val selected = ic.getSelectedText(0)?.toString()
         val target: String
         val replaceSelection: Boolean

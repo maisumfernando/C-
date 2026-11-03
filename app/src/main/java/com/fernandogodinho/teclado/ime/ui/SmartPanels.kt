@@ -191,7 +191,7 @@ fun ToolPreviewPanel(controller: KeyboardController) {
             Spacer(Modifier.width(8.dp))
             Text(r.tool.label, color = colors.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             if (r.tool.mode == ToolMode.REWRITE && r.original.isNotBlank()) {
-                PanelButton(if (showOriginal) "Ver proposta" else "Ver original") { showOriginal = !showOriginal }
+                PanelButton(if (showOriginal) "Proposta" else "Original") { showOriginal = !showOriginal }
             }
         }
         Box(

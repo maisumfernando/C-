@@ -103,7 +103,7 @@ fun TvScreen(onBack: () -> Unit) {
             SectionTitle("Suas TVs")
             if (paired.isEmpty()) {
                 Text(
-                    "Nenhuma TV pareada. Escolha a sua TV na lista abaixo; ela vai mostrar um código para você digitar aqui.",
+                    "Nenhuma TV pareada. Escolha a sua TV na lista abaixo; na primeira vez, ela pede para você permitir a conexão ou mostra um código.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 6.dp),

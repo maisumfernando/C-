@@ -17,7 +17,7 @@ Ao terminar uma sessão de trabalho, **atualize este arquivo e o diário**.
 
 ## Estado atual
 
-- Versão: veja `version.properties` (1.0.0 na sessão 1, 1.1.0 na sessão 2). `versionCode = major*10000 + minor*100 + patch`.
+- Versão: veja `version.properties` (1.0.0 na sessão 1, 1.1.0 e 1.2.0 na sessão 2). `versionCode = major*10000 + minor*100 + patch`.
 - Pacote Android: `com.fernandogodinho.teclado`. minSdk 26, targetSdk 36, apenas arm64-v8a.
 - **Primeiro uso real (sessão 2):** o dono instalou o 1.0.0 no Huawei Pura 80 Pro (EMUI) com Whisper Large v3
   Turbo + Gemma 4 E2B. Funcionou; ele relatou só bugs de interface (corrigidos na 1.1.0). Desempenho medido
@@ -38,9 +38,12 @@ app/src/main/cpp/                 JNI. Um único ggml (do llama.cpp) atende whis
   jni_whisper.cpp                 transcrição + VAD Silero em streaming (entradas validadas)
   jni_llm.cpp                     geração com cache de prompt: LCP no KV cache + snapshot do prefixo
 app/src/main/java/com/fernandogodinho/teclado/
-  TecladoApp.kt                   singletons (settings, models, engines, updates, learnedWords)
-  core/                           Settings (DataStore), SecureHttp (ÚNICA porta de rede), ProjectInfo,
-                                  DeviceProfile (RAM, núcleos grandes), OemTips (Huawei etc.), VocabularyStore
+  TecladoApp.kt                   singletons (settings, models, engines, updates, learnedWords, benchmark, tv,
+                                  snippets, composer)
+  core/                           Settings (DataStore), SecureHttp (ÚNICA porta para a internet), LocalNetwork
+                                  (só endereços privados, usado pela TV), ProjectInfo (site, chave Pix),
+                                  DeviceProfile, OemTips, VocabularyStore, SnippetStore (respostas salvas),
+                                  ComposerHandoff (texto do editor "Escrever com calma", só em memória)
   engine/                         EngineManager (carrega/descarrega modelos), SpeechEngine, TextEngine,
                                   Benchmark (cálculos puros do teste de velocidade) e BenchmarkRunner,
                                   Prompts (instruções + exemplos de revisão por estilo), TextPolisher,
@@ -49,13 +52,19 @@ app/src/main/java/com/fernandogodinho/teclado/
   dictation/DictationSession.kt   gravação 16 kHz, VAD, cortes nas pausas, transcrição incremental,
                                   modos TEXT/CODE/CODE_ALNUM/SECRET/ADDRESS/INSTRUCTION
   ime/                            TecladoIme (InputMethodService + Compose), KeyboardController (toda a
-                                  edição de texto), layouts, toque multi-dedo, sugestões (suggest/Dictionary)
-  ime/ui/                         KeyboardRoot, KeyGrid, DictationPanel, WritingToolsPanel, Panels (emoji/clipboard)
+                                  edição de texto, botões inteligentes, prévia da IA), layouts, toque
+                                  multi-dedo e trackpad, sugestões (suggest/Dictionary)
+  ime/smart/                      regras locais: Calculator, UnitConverter, Reminders, SensitiveData
+  ime/ui/                         KeyboardRoot, KeyGrid, KeyboardTheme (7 temas), DictationPanel,
+                                  WritingToolsPanel, SmartPanels (botões, respostas salvas, prévia), Panels
+  tv/                             Teclado na TV: AtvProtocol/AndroidTvLink (Google TV), TvBrands (Samsung,
+                                  LG, Roku), LanNet (WebSocket/HTTP/SSDP mínimos), TvDiscovery, TvManager,
+                                  TvLinkService (aviso em segundo plano), TvKeyboardActivity, bloco rápido
   models/                         ModelCatalog (embutido + catálogo online validado), ModelRepository,
                                   ModelDownloadWorker (retomável, SHA-256, marcador de verificação)
   updates/UpdateChecker.kt        catálogo de modelos + versão do app (só avisa; nunca instala)
   ui/                             app de configuração (onboarding, home, modelos, teste de velocidade, ajustes,
-                                  vocabulário, sobre)
+                                  vocabulário, respostas, TV, apoie/Pix, sobre) e ComposerActivity
 app/src/main/assets/              dicionários pt_br/en, emojis, modelo VAD Silero, benchmark/alienista.wav
                                   (15 s de "O Alienista", LibriVox, domínio público, para o teste de velocidade)
 app/src/test, app/src/testDebug   testes JVM e capturas de tela (Roborazzi) em app/build/screenshots/
@@ -69,8 +78,10 @@ third_party/                      submódulos fixados: whisper.cpp v1.9.5, llama
 
 ## Regras de segurança (não negociáveis)
 
-1. O código do teclado (pacote `ime`, `dictation`, `engine`) **nunca** acessa a rede. Toda rede passa por
-   `core/SecureHttp.kt`, com lista de hosts permitidos verificada em cada redirecionamento.
+1. O código do teclado (pacote `ime`, `dictation`, `engine`) **nunca** acessa a rede. Toda conexão com a internet
+   passa por `core/SecureHttp.kt`, com lista de hosts permitidos verificada em cada redirecionamento. A única
+   exceção é o pacote `tv` (Teclado na TV), que só fala com endereços **privados** da rede local
+   (`core/LocalNetwork.requireLocal`) e só envia o texto da tela "Digitar na TV" para uma TV pareada.
 2. Nenhum log com texto do usuário. Release remove `Log.v/d/i`.
 3. Campos de senha e "sem aprendizado personalizado" (`privateField`): sem aprendizado, sugestões, histórico,
    emojis recentes ou prévia de tecla. Senha usa `FLAG_SECURE`. Ditado de senha: sem IA, mascarado, com confirmação.
@@ -153,8 +164,17 @@ Para mudar a recomendação padrão ou a lista embutida, edite `ModelCatalog.kt`
 - Sem composing text: o teclado comita direto e acompanha a palavra atual; menos bugs em apps diversos.
 - Prompt de revisão com exemplos por estilo; o prefixo fica em cache (KV/snapshot), então só a fala é processada.
 - Saída da IA validada; se suspeita, usa a limpeza por regras (`TranscriptCleaner.basicPolish`).
-- Segurar espaço = ditado rápido; segurar emoji = trocar de teclado. A dica "Ouvindo… solte para inserir"
-  depende de `quickHolding` (só enquanto o dedo está na tecla); depois o progresso aparece na barra.
+- Segurar espaço = trackpad (pedido do dono, como no iPhone; dois dedos selecionam). Ditado só pelo
+  microfone (toque, ou segure o microfone para falar). Segurar emoji = trocar de teclado. Setas só são
+  enviadas quando há texto naquela direção (evita o app mudar o foco para outro campo).
+- Temas: `KeyboardThemeId` + `KeyboardPalette`. `ThemeContrastTest` reprova qualquer par de cores abaixo do
+  WCAG (texto 4,5:1, ícones 3:1), inclusive no esquema de cores do app.
+- Ferramentas de IA nunca alteram o texto direto: o resultado vai para `ToolResult`/painel de prévia
+  (substituir, inserir abaixo, copiar, descartar). Ferramentas de resposta usam só a mensagem que o
+  usuário copiou (`clipboard.recent()`), nunca leem outros apps.
+- Teclado na TV: Google TV usa o protocolo do app Google TV (pareamento por código, chave no Keystore);
+  Samsung/LG usam WebSocket com autorização na TV (token/client-key salvos em `tvs.json`); Roku usa ECP.
+  Certificados TLS da TV são fixados no primeiro uso. Hisense VIDAA e Panasonic não são suportadas.
 - Altura do teclado: 100% = tamanho máximo e padrão (escala 70–100%, chave `keyboard_height_v2`). A altura
   cheia de cada fileira acompanha a tela (`fullRowHeight`: 6,6% da altura, entre 52 e 64 dp; paisagem menor).
 - Tema do app: `TecladoTheme` envolve tudo num `Surface` (sem ele, Text sem cor saía preto no modo escuro).
@@ -165,6 +185,13 @@ Para mudar a recomendação padrão ou a lista embutida, edite `ModelCatalog.kt`
 - UI do app e do teclado está em português direto no código (Compose). Só o nome do app é traduzido.
 
 ## Ideias e pendências (backlog)
+
+- **Teclado na TV nunca foi testado com uma TV real**: os protocolos foram conferidos byte a byte contra
+  as definições/implementações de referência (androidtvremote2, samsungtvws, aiowebostv), mas peça ao dono
+  para testar com a TV TCL dele e, se possível, Samsung/LG. Ajustar mensagens de erro conforme o retorno.
+- Do documento de sugestões do dono, ficaram para depois: previsão de frases (bigramas aprendidos, opt-in),
+  busca semântica nas respostas salvas (precisa de modelo de embeddings local), OCR de imagem escolhida
+  pelo usuário (sem ML Kit, que envia métricas) e tradução com modelo dedicado (hoje a tradução usa o LLM).
 
 - Pedir ao dono os números do "Teste de velocidade" no Pura 80 Pro e calibrar `relativeCost`, os segmentos
   e as recomendações de `ModelCatalog.recommended` com dados reais (e de celulares de 3–4 GB).

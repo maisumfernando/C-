@@ -22,12 +22,24 @@ KEYBOARD = {
     "dictation_password": "kbd-password.webp",
     "writing_tools": "kbd-tools.webp",
     "keyboard_one_handed": "kbd-onehanded.webp",
+    "keyboard_trackpad": "kbd-trackpad.webp",
+    "keyboard_smart_chips": "kbd-smart.webp",
+    "keyboard_tool_preview": "kbd-preview.webp",
+    "theme_graphite": "theme-graphite.webp",
+    "theme_midnight": "theme-midnight.webp",
+    "theme_sage": "theme-sage.webp",
+    "theme_sand": "theme-sand.webp",
+    "theme_lavender": "theme-lavender.webp",
+    "theme_high_contrast": "theme-high-contrast.webp",
 }
 SCREENS = {
     "app_home": "app-home.webp",
     "app_home_dark": "app-home-dark.webp",
     "app_models": "app-models.webp",
     "app_onboarding": "app-onboarding.webp",
+    "app_tv": "app-tv.webp",
+    "app_support": "app-support.webp",
+    "app_keyboard_settings": "app-keyboard-settings.webp",
 }
 # The speed test is rendered on a taller screen; the notice shown when no model is installed
 # (always the case in tests) is cut out so the intro sits right above the results.

@@ -12,7 +12,7 @@ issues públicas para falhas de segurança. Responderemos o mais rápido possív
 
 | Ameaça | Mitigação |
 |---|---|
-| Vazamento do que é digitado/ditado para a internet | O código do teclado (IME) não chama a rede. Todo acesso de rede passa por `core/SecureHttp.kt`, usado apenas para baixar modelos e verificar atualizações. |
+| Vazamento do que é digitado/ditado para a internet | O código do teclado (IME) não chama a rede. Todo acesso à internet passa por `core/SecureHttp.kt`, usado apenas para baixar modelos e verificar atualizações. A única outra conexão é o Teclado na TV, restrito à rede local (abaixo). |
 | Conexão com servidores maliciosos ou interceptação (MITM) | Somente HTTPS; `network_security_config.xml` bloqueia texto puro e não confia em certificados instalados pelo usuário; lista de destinos permitidos (`huggingface.co`, `*.hf.co`, o site do projeto) checada em **cada** redirecionamento; sem cookies nem credenciais. |
 | Modelo adulterado (ataque ao parser GGUF/ggml) | Cada modelo é fixado em um commit exato do Hugging Face e conferido por **SHA-256** antes do uso; um marcador de verificação (hash + tamanho + data) é exigido a cada inicialização; arquivos ficam somente leitura no armazenamento privado do app. |
 | Catálogo de atualizações malicioso | `catalog/models.json` só **adiciona** modelos; cada entrada é validada (organizações confiáveis no Hugging Face, commit de 40 hex, SHA-256 de 64 hex, extensão `.bin`/`.gguf`, tamanho, sem `..`, limites de texto); o catálogo inteiro é rejeitado se algo falhar; não aceita versão de catálogo mais antiga; nada é baixado sem toque do usuário. |
@@ -25,6 +25,8 @@ issues públicas para falhas de segurança. Responderemos o mais rápido possív
 | Componentes expostos | Só a tela inicial (launcher) e o serviço de teclado (protegido por `BIND_INPUT_METHOD`) são exportados, além de componentes internos do AndroidX protegidos por permissões que só o sistema possui (`BIND_JOB_SERVICE`, `DUMP`). A tela inicial aceita apenas rotas de uma lista fixa. `PendingIntent` sempre imutável. |
 | Código nativo | Entradas JNI validadas (limites de áudio, índices, papéis de mensagem); compilação com `-fstack-protector-strong`, `_FORTIFY_SOURCE=2`, RELRO completo, pilha não executável e símbolos ocultos. |
 | Cadeia de suprimentos | Submódulos fixados em commits (whisper.cpp v1.9.5, llama.cpp b12068); verificação de dependências do Gradle (`gradle/verification-metadata.xml`, SHA-256); checksum da distribuição do Gradle; GitHub Actions fixadas por SHA de commit; permissões mínimas no workflow. |
+| Teclado na TV (rede local) | Recurso opcional, separado do teclado (pacote `tv`). Conecta **somente a endereços privados** da rede da casa (`core/LocalNetwork.kt`: 10/8, 172.16/12, 192.168/16, link-local e IPv6 ULA), nunca à internet. Só o texto escrito na tela “Digitar na TV” é enviado, e só para uma TV que o usuário pareou. Google TV/Android TV: TLS com certificado do celular no Android Keystore e código de pareamento mostrado na TV; o certificado da TV é fixado. Samsung (porta 8002) e LG (porta 3001): TLS com certificado da TV fixado no primeiro uso e autorização na tela da TV (token/chave guardados no armazenamento privado). Modelos antigos sem TLS (Samsung 8001, LG 3000) e as TVs Roku (porta 8060) usam protocolos sem criptografia definidos pelo fabricante: o texto digitado para a TV trafega aberto na rede local. A descoberta usa mDNS/SSDP na rede local. |
+| Ferramentas locais | Calculadora, conversor, lembretes e alerta de dados sensíveis usam só regras locais e não guardam o texto analisado. Respostas salvas ficam no armazenamento privado (sem backup), as protegidas exigem dois toques. O editor “Escrever com calma” guarda o rascunho só na memória. |
 | Injeção de prompt pela fala | A IA não tem ferramentas nem acesso a nada além do texto; a saída é verificada (tamanho, repetição, “responder em vez de revisar”) e, se suspeita, substituída pela transcrição limpa por regras. |
 
 ## Permissões do Android
@@ -36,6 +38,8 @@ issues públicas para falhas de segurança. Responderemos o mais rápido possív
 | `POST_NOTIFICATIONS` | Progresso do download e avisos de atualização |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC` | Continuar downloads grandes em segundo plano |
 | `VIBRATE` | Vibração das teclas |
+| `FOREGROUND_SERVICE_CONNECTED_DEVICE`, `CHANGE_WIFI_MULTICAST_STATE` | Opcional: manter a conexão com a TV pareada e descobrir TVs na rede local |
+| `SET_ALARM` | Abrir o app de relógio com um timer, depois que o usuário confirma “/timer” |
 | `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED` | Adicionadas pela biblioteca WorkManager: manter o download ativo e reagendar a verificação de atualizações após reiniciar |
 
 Nenhum acesso a contatos, SMS, arquivos, localização, câmera ou contas.

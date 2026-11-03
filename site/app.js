@@ -25,6 +25,29 @@
     });
   }
 
+  var pixButton = document.getElementById("copy-pix");
+  var pixKey = document.getElementById("pix-key");
+  if (pixButton && pixKey) {
+    pixButton.addEventListener("click", function () {
+      var done = function () {
+        pixButton.textContent = "Chave copiada";
+        setTimeout(function () { pixButton.textContent = "Copiar chave Pix"; }, 2000);
+      };
+      var fallback = function () {
+        var range = document.createRange();
+        range.selectNodeContents(pixKey);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(pixKey.textContent.trim()).then(done, fallback);
+      } else {
+        fallback();
+      }
+    });
+  }
+
   var strip = document.getElementById("strip");
   var prev = document.getElementById("strip-prev");
   var next = document.getElementById("strip-next");

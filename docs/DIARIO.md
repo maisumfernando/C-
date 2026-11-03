@@ -87,3 +87,32 @@ quantidade de palavras; o botão de download do site não baixava nada; site mai
    publicar a release 1.1.0 e o site; depois ativar o Pages no branch `gh-pages`.
 2. Pedir os resultados do teste de velocidade no Pura 80 Pro para calibrar estimativas e recomendações.
 3. Considerar unir este branch ao branch padrão (PR) quando o dono quiser.
+
+## Sessão 2 (continuação) — versão 1.2.0
+
+**Pedidos:** barra de espaço como trackpad (igual ao iPhone) e ditado só no microfone; botão do microfone
+sem o azul; 4 ou 5 temas novos com cuidado de legibilidade; teclado na TV (detectar TVs na rede, avisar
+quando a TV abrir uma caixa de texto, digitar pelo celular) para todas as marcas vendidas no Brasil; página
+sobre o Fernando com a chave Pix (app e site); implementar as sugestões do documento
+`sugestoes_teclado_android_100_por_cento_local.md` e fazer uma revisão completa em busca de bugs.
+
+**Feito:**
+- Trackpad no espaço (dois dedos selecionam), setas protegidas contra troca de foco; ajuste removido.
+- Microfone grafite neutro; temas Grafite, Meia-noite, Sálvia, Areia, Lavanda e Alto contraste, com seletor
+  visual; `ThemeContrastTest` (teclado e app) — corrigiu o verde de "Pronto para ditar" e o texto secundário.
+- Teclado na TV: Google TV/Android TV (pareamento por código, TLS com chave no Keystore), Samsung Tizen,
+  LG webOS e Roku; descoberta mDNS + SSDP; serviço opcional que avisa quando a TV abre uma busca;
+  tela "Digitar na TV" (funciona com o ditado do teclado); bloco nas Configurações rápidas; só rede local.
+- Apoie o projeto: tela no app e seção no site com a chave Pix fjgs@outlook.com (botão copiar).
+- Do documento de sugestões: calculadora, conversor de unidades, respostas salvas com /atalho (app para
+  criar/editar/exportar), lembretes e timers por regras, domínios de e-mail, alerta de cartão/CPF/CNPJ,
+  editor "Escrever com calma", prévia antes de qualquer alteração da IA e novas ferramentas (mais claro,
+  simples, descontraído, assertivo, profissional, expandir, resumir, sugerir resposta, perguntas sem
+  resposta, ambiguidades, coerência, sinônimos).
+- Revisão de bugs: painéis fechavam quando o app reiniciava o campo; sessão da TV caía para "parear de
+  novo" após uma queda de Wi-Fi e parava de reconectar; laço ocupado ao fechar WebSocket; ditado não passava
+  pelo alerta de dados sensíveis; efeito colateral em composição no painel de prévia.
+- Testes: 9 novos de TV (protocolo byte a byte, WebSocket, diff de texto), contraste, ferramentas locais;
+  capturas de todos os temas e telas novas.
+
+**Pendências:** testar a TV com aparelhos reais; secrets de assinatura (ver CLAUDE.md); itens do backlog.

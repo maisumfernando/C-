@@ -29,9 +29,10 @@
     <nav class="top__nav" aria-label="Seções">
       <a href="#como-funciona">Como funciona</a>
       <a href="#recursos">Recursos</a>
+      <a href="#tv">TV</a>
       <a href="#velocidade">Velocidade</a>
       <a href="#privacidade">Privacidade</a>
-      <a href="#instalar">Instalar</a>
+      <a href="#apoie">Apoie</a>
     </nav>
     <a class="btn btn--small" href="{{DOWNLOAD_HREF}}">{{DOWNLOAD_SHORT}}</a>
   </div>
@@ -268,10 +269,10 @@
       <div class="bento">
         <article class="card card--wide">
           <div class="art art--space" aria-hidden="true">
-            <div class="mini-keys"><i></i><i></i><i class="space-key"><span class="dot dot--rec"></span> Ouvindo… solte para inserir<span class="touch"></span></i><i></i><i class="enter"></i></div>
+            <div class="trackpad"><span class="trackpad__cursor"></span><span class="trackpad__finger"></span><span class="trackpad__hint">toque e segure o espaço · deslize para mover o cursor</span></div>
           </div>
-          <h3>Segure o espaço, fale e solte</h3>
-          <p>Segure a barra de espaço e fale. Ao soltar, o texto entra no campo já revisado, sem abrir nenhum painel. Para ditados longos, toque no microfone e acompanhe a prévia ao vivo.</p>
+          <h3>A barra de espaço vira um trackpad</h3>
+          <p>Toque e segure o espaço: o teclado inteiro vira um trackpad, como no iPhone, para levar o cursor exatamente onde você quer. Com dois dedos, seleciona o texto. Para ditar, toque no microfone.</p>
         </article>
         <article class="card">
           <div class="art" aria-hidden="true">
@@ -347,7 +348,7 @@
   <section id="velocidade" class="band">
     <div class="wrap split">
       <div class="split__text">
-        <p class="eyebrow">Novo na versão 1.1</p>
+        <p class="eyebrow">Teste de velocidade</p>
         <h2>Descubra a melhor combinação para o seu celular</h2>
         <p class="section__lede">O teste de velocidade roda cada modelo instalado no seu aparelho com o mesmo áudio e o mesmo ditado, e mostra quanto tempo você esperaria pelo texto pronto em cada combinação de voz e revisão.</p>
         <ul class="ticks">
@@ -426,6 +427,7 @@
           <li class="netlist__row"><span class="ok">✓</span><code>huggingface.co</code><span>modelos de IA</span></li>
           <li class="netlist__row"><span class="ok">✓</span><code>*.hf.co</code><span>download dos modelos</span></li>
           <li class="netlist__row"><span class="ok">✓</span><code>{{PAGES_HOST}}</code><span>avisos de atualização</span></li>
+          <li class="netlist__row"><span class="ok">✓</span><code>sua TV</code><span>só na rede da casa, só o texto da tela “Digitar na TV”</span></li>
           <li class="netlist__row netlist__row--no"><span class="no">✕</span><code>qualquer outro</code><span>bloqueado no código, inclusive em redirecionamentos</span></li>
           </ul>
           <details class="perms">
@@ -490,6 +492,88 @@
     </div>
   </section>
 
+  <!-- Themes: real captures of every keyboard theme. -->
+  <section id="temas" class="band band--soft">
+    <div class="wrap">
+      <p class="eyebrow">Temas</p>
+      <h2>Sete temas, todos fáceis de ler</h2>
+      <p class="section__lede">Do Clássico, que acompanha o claro e o escuro do celular, ao Alto contraste. Cada cor passa por um teste automático de legibilidade antes de entrar no app.</p>
+      <div class="themes">
+        <figure><img src="img/kbd-light.webp" width="600" height="417" alt="Tema Clássico claro"><figcaption>Clássico</figcaption></figure>
+        <figure><img src="img/theme-graphite.webp" width="600" height="417" alt="Tema Grafite"><figcaption>Grafite</figcaption></figure>
+        <figure><img src="img/theme-midnight.webp" width="600" height="417" alt="Tema Meia-noite"><figcaption>Meia-noite</figcaption></figure>
+        <figure><img src="img/theme-sage.webp" width="600" height="417" alt="Tema Sálvia"><figcaption>Sálvia</figcaption></figure>
+        <figure><img src="img/theme-sand.webp" width="600" height="417" alt="Tema Areia"><figcaption>Areia</figcaption></figure>
+        <figure><img src="img/theme-lavender.webp" width="600" height="417" alt="Tema Lavanda"><figcaption>Lavanda</figcaption></figure>
+        <figure><img src="img/theme-high-contrast.webp" width="600" height="417" alt="Tema Alto contraste"><figcaption>Alto contraste</figcaption></figure>
+        <figure><img src="img/kbd-dark.webp" width="600" height="417" alt="Tema Clássico escuro"><figcaption>Clássico escuro</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- TV: type and dictate on the TV from the phone. -->
+  <section id="tv" class="band band--night">
+    <div class="wrap split">
+      <div class="split__text">
+        <p class="eyebrow">Teclado na TV</p>
+        <h2>Digite e dite na TV pelo celular</h2>
+        <p class="section__lede">A TV abriu a busca do YouTube, da Netflix ou do Globoplay? Uma notificação aparece no celular: toque, escreva ou fale, e o texto surge na TV na hora. A conexão é direta pela sua rede Wi-Fi, sem internet.</p>
+        <ul class="brands" aria-label="TVs compatíveis">
+          <li><b>Samsung</b><span>Tizen, de 2016 em diante</span></li>
+          <li><b>LG</b><span>webOS</span></li>
+          <li><b>Google TV e Android TV</b><span>TCL, Sony, Philips, Philco, Sharp, Hisense, Multilaser…</span></li>
+          <li><b>Roku TV</b><span>TCL, Semp, AOC, Philco</span></li>
+        </ul>
+        <p class="tv-note">Na primeira vez, a TV pede para você permitir a conexão (ou mostra um código). TVs Hisense com VIDAA e Panasonic ainda não são compatíveis.</p>
+      </div>
+      <figure class="split__media">
+        <div class="phone phone--tall"><div class="phone__screen phone__screen--app"><div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div><img class="phone__full" src="img/app-tv.webp" width="600" height="1301" alt="Tela Teclado na TV com as TVs encontradas na rede"></div></div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Local helpers that need no AI. -->
+  <section id="ferramentas" class="band">
+    <div class="wrap split">
+      <figure class="split__media">
+        <div class="kbd-stack">
+          <img src="img/kbd-smart.webp" width="600" height="417" alt="Barra do teclado com o resultado de uma conta e de uma conversão">
+          <img src="img/kbd-preview.webp" width="600" height="417" alt="Prévia de uma ferramenta de IA com os botões Substituir, Inserir abaixo, Copiar e Descartar">
+        </div>
+      </figure>
+      <div class="split__text">
+        <p class="eyebrow">Ferramentas</p>
+        <h2>Pequenas ajudas que fazem diferença</h2>
+        <ul class="ticks">
+          <li><b>Calculadora.</b> Digite “1.250,50 × 3 =” e o resultado aparece pronto para inserir.</li>
+          <li><b>Conversor.</b> “10 km em milhas”, “30 °C em F”, “2,5 kg em libras”.</li>
+          <li><b>Respostas salvas.</b> Assinatura, endereço e respostas prontas com um toque ou com /atalho.</li>
+          <li><b>Lembretes.</b> “/lembrete amanhã às 8h ligar para o banco” abre a agenda já preenchida.</li>
+          <li><b>Escrever com calma.</b> Um editor grande para mensagens longas, que devolve o texto ao app.</li>
+          <li><b>Aviso de dados sensíveis.</b> Número de cartão, CPF ou CNPJ? O teclado lembra de conferir antes de enviar.</li>
+          <li><b>IA com prévia.</b> Resumir, sugerir resposta, deixar mais claro, sinônimos e mais: você vê antes de trocar o texto.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Support the project (Pix). -->
+  <section id="apoie" class="band band--soft">
+    <div class="wrap support">
+      <div>
+        <p class="eyebrow">Apoie o projeto</p>
+        <h2>Gratuito para todos. Mantido por quem gosta.</h2>
+        <p class="section__lede">Este teclado é um projeto de Fernando Godinho, apresentado no canal dele no YouTube. Não tem anúncios, não tem assinatura e não vende dados. Se ele facilita o seu dia, você pode ajudar o projeto a continuar com um Pix de qualquer valor.</p>
+      </div>
+      <div class="pix">
+        <p class="pix__label">Chave Pix (e-mail)</p>
+        <code id="pix-key" class="pix__key">fjgs@outlook.com</code>
+        <button type="button" id="copy-pix" class="btn">Copiar chave Pix</button>
+        <p class="pix__note">No app do seu banco: Pix › Pagar com chave. Confira o nome Fernando Godinho antes de confirmar. A contribuição é voluntária e não muda nada no app.</p>
+      </div>
+    </div>
+  </section>
+
   <section id="perguntas" class="band">
     <div class="wrap narrow">
       <p class="eyebrow">Dúvidas</p>
@@ -502,6 +586,10 @@
         <details>
           <summary>Quais modelos devo escolher?</summary>
           <p>O app já recomenda um pacote para a memória do seu celular. Se quiser comparar, abra “Teste de velocidade”: ele mede os modelos no seu aparelho e mostra o tempo de cada combinação para mensagens curtas, parágrafos e textos longos.</p>
+        </details>
+        <details>
+          <summary>Quais TVs funcionam com o Teclado na TV?</summary>
+          <p>Samsung com Tizen (2016 em diante), LG com webOS, TVs com Google TV ou Android TV (TCL, Sony, Philips, Philco, Sharp, Hisense e outras) e TVs Roku (TCL, Semp, AOC, Philco). O celular e a TV precisam estar na mesma rede Wi-Fi. TVs Hisense com VIDAA e Panasonic ainda não são compatíveis.</p>
         </details>
         <details>
           <summary>Funciona sem internet?</summary>

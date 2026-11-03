@@ -80,6 +80,7 @@ data class AppSettings(
     val clipboardHistory: Boolean = true,
     val smartPaste: Boolean = true,
     val learnWords: Boolean = true,
+    val autoPrivateApps: Boolean = true,
     val holdSpaceToDictate: Boolean = true,
     val adaptToneToApp: Boolean = false,
     val oneHanded: OneHandedMode = OneHandedMode.OFF,
@@ -118,6 +119,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val clipboard = booleanPreferencesKey("clipboard_history")
         val smartPaste = booleanPreferencesKey("smart_paste")
         val learnWords = booleanPreferencesKey("learn_words")
+        val autoPrivate = booleanPreferencesKey("auto_private_apps")
         val holdSpace = booleanPreferencesKey("hold_space_dictate")
         val adaptTone = booleanPreferencesKey("adapt_tone_to_app")
         val oneHanded = stringPreferencesKey("one_handed")
@@ -160,6 +162,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
     fun setOnboardingDone(v: Boolean) = update { it[K.onboarding] = v }
     fun setSmartPaste(v: Boolean) = update { it[K.smartPaste] = v }
     fun setLearnWords(v: Boolean) = update { it[K.learnWords] = v }
+    fun setAutoPrivateApps(v: Boolean) = update { it[K.autoPrivate] = v }
     fun setHoldSpaceToDictate(v: Boolean) = update { it[K.holdSpace] = v }
     fun setAdaptToneToApp(v: Boolean) = update { it[K.adaptTone] = v }
     fun setOneHanded(v: OneHandedMode) = update { it[K.oneHanded] = v.name }
@@ -199,6 +202,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             clipboardHistory = this[K.clipboard] ?: d.clipboardHistory,
             smartPaste = this[K.smartPaste] ?: d.smartPaste,
             learnWords = this[K.learnWords] ?: d.learnWords,
+            autoPrivateApps = this[K.autoPrivate] ?: d.autoPrivateApps,
             holdSpaceToDictate = this[K.holdSpace] ?: d.holdSpaceToDictate,
             adaptToneToApp = this[K.adaptTone] ?: d.adaptToneToApp,
             oneHanded = enumOr(this[K.oneHanded], d.oneHanded),

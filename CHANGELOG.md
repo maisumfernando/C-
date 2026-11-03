@@ -11,4 +11,5 @@ Cada seção abaixo vira a lista de "Novidades" no site e na página de versões
 - Ferramentas de IA: revisar, corrigir, mais formal, mais amigável, mais curto, em tópicos, virar e-mail, traduzir e comando de voz.
 - Teclado completo em português: acentos no toque longo, ç, sugestões e correção automática, emojis, área de transferência, colar inteligente e modo uma mão.
 - Atualização de modelos verificada por SHA-256 e aviso de novas versões.
+- Modo privado automático em abas anônimas e em apps de privacidade (Firefox Focus, DuckDuckGo, Tor, Signal, gerenciadores de senha), com símbolo de óculos no teclado e botão para ligar em qualquer app.
 - Proteções de privacidade: sem servidores, sem telemetria, rede limitada ao Hugging Face e a este site.

@@ -135,6 +135,7 @@ fun KeyboardRoot(service: TecladoIme, controller: KeyboardController) {
                                     feedback = feedback,
                                     modifier = Modifier.padding(horizontal = 3.dp),
                                 )
+                                if (controller.privateField) PrivateWatermark()
                             }
                         }
                     }
@@ -195,6 +196,7 @@ private fun ToolbarActions(controller: KeyboardController) {
         ToolbarIcon(Icons.Outlined.Settings, "Configurações") { controller.openApp() }
         ToolbarIcon(Icons.Outlined.ContentPaste, "Área de transferência") { controller.showPanel(Panel.CLIPBOARD) }
         ToolbarIcon(Icons.Outlined.AutoAwesome, "Ferramentas de IA") { controller.openWritingTools() }
+        PrivacyToggle(controller.privateField) { controller.togglePrivateMode() }
         ToolbarIcon(Icons.Outlined.PanTool, "Modo uma mão") { controller.toggleOneHanded() }
         ToolbarIcon(Icons.Outlined.KeyboardHide, "Fechar teclado") { controller.hideKeyboard() }
     }

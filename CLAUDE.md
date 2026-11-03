@@ -27,6 +27,10 @@ Ao terminar uma sessão de trabalho, **atualize este arquivo e o diário**.
   secrets de assinatura existem (ver "Publicação"). O dono recebeu o APK 1.0.0 assinado com a chave oficial
   diretamente na sessão 1, e um arquivo privado com a chave para cadastrar nos secrets.
 - Prévia da página (artifact privado do dono): https://claude.ai/artifact/3bn2jntjLVTuyY6HojJM2G
+- O envio do APK como anexo no chat do Claude falhou no celular do dono: entregue sempre por link
+  (site no GitHub Pages ou release do GitHub).
+- Modo privado: `ime/PrivacyMode.kt` (lista de apps) + `KeyboardController.applyPrivacy`. Sites não são
+  detectáveis por teclados no Android; abas anônimas são, pela flag do campo.
 
 ## Estrutura
 

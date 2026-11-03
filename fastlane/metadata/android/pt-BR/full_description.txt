@@ -1,0 +1,10 @@
+Teclado completo com ditado por voz que entrega texto revisado em português impecável.
+
+• Segure a barra de espaço, fale e solte: o texto entra já revisado.
+• A IA tira "né", "tipo", repetições e autocorreções e acerta crase, pontuação e termos em inglês.
+• Diga códigos de verificação e senhas soletradas com segurança.
+• Ferramentas de IA: mais formal, mais curto, em tópicos, e-mail, tradução e comandos de voz.
+• Acentos no toque longo, ç, sugestões em português, emojis, área de transferência e modo uma mão.
+
+Privacidade: Whisper e o modelo de revisão rodam no celular. Nada do que você diz ou digita é enviado.
+Sem anúncios, sem contas, sem telemetria. Código aberto (Apache 2.0).

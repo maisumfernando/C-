@@ -1,0 +1,9 @@
+Un teclado completo con dictado por voz que entrega texto revisado y listo para enviar.
+
+• Mantén pulsada la barra espaciadora, habla y suelta: el texto llega ya revisado.
+• La IA del teléfono elimina muletillas, repeticiones y autocorrecciones habladas, y corrige gramática y puntuación.
+• Dicta códigos de verificación y contraseñas deletreadas de forma segura.
+• Herramientas de IA: más formal, más corto, en viñetas, correo electrónico, traducción y comandos de voz.
+
+Privacidad: Whisper y el modelo de lenguaje funcionan en tu teléfono. Nada de lo que dices o escribes se envía.
+Sin anuncios, sin cuentas, sin telemetría. Código abierto (Apache 2.0). Optimizado para portugués de Brasil.

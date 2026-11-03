@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-using namespace escriba;
+using namespace teclado;
 
 namespace {
 
@@ -26,6 +26,10 @@ struct VadHandle {
     std::mutex            mutex;
 };
 
+// 16 kHz mono: at most 11 minutes per call, 30 s per VAD call.
+constexpr jint kMaxSamples    = 16000 * 60 * 11;
+constexpr jint kMaxVadSamples = 16000 * 30;
+
 bool abort_cb(void * user_data) {
     return static_cast<std::atomic<bool> *>(user_data)->load(std::memory_order_relaxed);
 }
@@ -33,7 +37,7 @@ bool abort_cb(void * user_data) {
 } // namespace
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_app_escriba_engine_NativeBridge_whisperLoad(JNIEnv * env, jobject /*thiz*/, jstring jpath, jboolean flash_attn) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_whisperLoad(JNIEnv * env, jobject /*thiz*/, jstring jpath, jboolean flash_attn) {
     const std::string path = to_utf8(env, jpath);
     whisper_context_params cparams = whisper_context_default_params();
     cparams.use_gpu    = false;
@@ -50,7 +54,7 @@ Java_app_escriba_engine_NativeBridge_whisperLoad(JNIEnv * env, jobject /*thiz*/,
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_app_escriba_engine_NativeBridge_whisperFree(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_whisperFree(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
     auto * h = reinterpret_cast<WhisperHandle *>(handle);
     if (h == nullptr) return;
     h->abort = true;
@@ -63,7 +67,7 @@ Java_app_escriba_engine_NativeBridge_whisperFree(JNIEnv * /*env*/, jobject /*thi
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_app_escriba_engine_NativeBridge_whisperAbort(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_whisperAbort(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
     auto * h = reinterpret_cast<WhisperHandle *>(handle);
     if (h != nullptr) h->abort = true;
 }
@@ -73,19 +77,28 @@ Java_app_escriba_engine_NativeBridge_whisperAbort(JNIEnv * /*env*/, jobject /*th
  * Returns {text, detected_language} or null on failure. Aborted runs return an empty text.
  */
 extern "C" JNIEXPORT jobjectArray JNICALL
-Java_app_escriba_engine_NativeBridge_whisperTranscribe(
+Java_com_fernandogodinho_teclado_engine_NativeBridge_whisperTranscribe(
         JNIEnv * env, jobject /*thiz*/, jlong handle,
         jfloatArray jsamples, jint offset, jint length,
         jstring jlanguage, jstring jprompt,
         jint n_threads, jint beam_size, jint audio_ctx,
         jstring jvad_model, jfloat no_speech_thold) {
     auto * h = reinterpret_cast<WhisperHandle *>(handle);
-    if (h == nullptr || h->ctx == nullptr || length <= 0) {
+    if (h == nullptr || h->ctx == nullptr || jsamples == nullptr) {
+        return nullptr;
+    }
+    // Validate the requested window before touching memory.
+    const jsize available = env->GetArrayLength(jsamples);
+    if (offset < 0 || length <= 0 || length > kMaxSamples || offset > available - length) {
+        LOGE("whisper: invalid audio window");
         return nullptr;
     }
 
     std::vector<float> pcm(static_cast<size_t>(length));
     env->GetFloatArrayRegion(jsamples, offset, length, pcm.data());
+    if (env->ExceptionCheck()) {
+        return nullptr;
+    }
 
     const std::string language  = to_utf8(env, jlanguage);
     const std::string prompt    = to_utf8(env, jprompt);
@@ -167,7 +180,7 @@ Java_app_escriba_engine_NativeBridge_whisperTranscribe(
 // ---------------------------------------------------------------------------
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_app_escriba_engine_NativeBridge_vadLoad(JNIEnv * env, jobject /*thiz*/, jstring jpath) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_vadLoad(JNIEnv * env, jobject /*thiz*/, jstring jpath) {
     const std::string path = to_utf8(env, jpath);
     whisper_vad_context_params vp = whisper_vad_default_context_params();
     vp.n_threads = 1;
@@ -183,7 +196,7 @@ Java_app_escriba_engine_NativeBridge_vadLoad(JNIEnv * env, jobject /*thiz*/, jst
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_app_escriba_engine_NativeBridge_vadFree(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_vadFree(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
     auto * h = reinterpret_cast<VadHandle *>(handle);
     if (h == nullptr) return;
     {
@@ -195,7 +208,7 @@ Java_app_escriba_engine_NativeBridge_vadFree(JNIEnv * /*env*/, jobject /*thiz*/,
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_app_escriba_engine_NativeBridge_vadReset(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_vadReset(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
     auto * h = reinterpret_cast<VadHandle *>(handle);
     if (h == nullptr) return;
     std::lock_guard<std::mutex> lock(h->mutex);
@@ -204,14 +217,18 @@ Java_app_escriba_engine_NativeBridge_vadReset(JNIEnv * /*env*/, jobject /*thiz*/
 
 /** Returns one speech probability per 512-sample (32 ms) window. */
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_app_escriba_engine_NativeBridge_vadProcess(JNIEnv * env, jobject /*thiz*/, jlong handle,
+Java_com_fernandogodinho_teclado_engine_NativeBridge_vadProcess(JNIEnv * env, jobject /*thiz*/, jlong handle,
                                                 jfloatArray jsamples, jint length) {
     auto * h = reinterpret_cast<VadHandle *>(handle);
-    if (h == nullptr || h->ctx == nullptr || length <= 0) {
+    if (h == nullptr || h->ctx == nullptr || jsamples == nullptr || length <= 0 ||
+        length > env->GetArrayLength(jsamples) || length > kMaxVadSamples) {
         return env->NewFloatArray(0);
     }
     std::vector<float> pcm(static_cast<size_t>(length));
     env->GetFloatArrayRegion(jsamples, 0, length, pcm.data());
+    if (env->ExceptionCheck()) {
+        return nullptr;
+    }
 
     std::lock_guard<std::mutex> lock(h->mutex);
     if (!whisper_vad_detect_speech_no_reset(h->ctx, pcm.data(), length)) {

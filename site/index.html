@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<!-- HEAD -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Teclado para Android que transforma a sua voz em texto revisado, em português impecável, com IA que roda inteiramente no celular. Grátis e de código aberto.">
+<meta name="theme-color" content="#F6F7F9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1120" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Teclado do Fernando Godinho">
+<meta property="og:description" content="Fale. O texto chega revisado. Ditado com IA 100% no celular, grátis e de código aberto.">
+<meta property="og:type" content="website">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="styles.css">
+<!-- /HEAD -->
+<title>Teclado do Fernando Godinho</title>
+</head>
+<body>
+<!-- BODY -->
+<header class="top">
+  <div class="wrap top__inner">
+    <a class="brand" href="#inicio" aria-label="Início">
+      <img src="icon.svg" alt="" width="28" height="28">
+      <span>Teclado do Fernando Godinho</span>
+    </a>
+    <nav class="top__nav" aria-label="Seções">
+      <a href="#recursos">Recursos</a>
+      <a href="#privacidade">Privacidade</a>
+      <a href="#instalar">Instalar</a>
+      <a href="#novidades">Novidades</a>
+    </nav>
+    <a class="btn btn--small" href="{{DOWNLOAD_HREF}}">{{DOWNLOAD_SHORT}}</a>
+  </div>
+</header>
+
+<main id="inicio">
+  <section class="hero">
+    <div class="wrap hero__grid">
+      <div class="hero__copy">
+        <p class="eyebrow">Teclado para Android · grátis e de código aberto</p>
+        <h1>Fale. O texto chega revisado.</h1>
+        <p class="lede">
+          Você dita do jeito que fala. O Whisper transcreve, uma IA no próprio celular revisa, e o campo recebe
+          um texto em português impecável: sem “né”, sem repetição, sem frase pela metade.
+          Nada do que você diz sai do aparelho.
+        </p>
+        <div class="cta">
+          <a class="btn" href="{{DOWNLOAD_HREF}}">{{DOWNLOAD_LABEL}}</a>
+          <a class="btn btn--ghost" href="{{SOURCE_URL}}" rel="noopener">Ver o código no GitHub</a>
+        </div>
+        <p class="cta__meta">{{DOWNLOAD_META}}</p>
+        <ul class="facts" aria-label="Em resumo">
+          <li><b>0</b> servidores</li>
+          <li><b>0</b> anúncios</li>
+          <li><b>0</b> contas</li>
+          <li><b>100%</b> no celular</li>
+        </ul>
+      </div>
+
+      <figure class="manuscript" aria-label="Exemplo de revisão de um ditado">
+        <figcaption class="manuscript__label">Você fala</figcaption>
+        <p class="spoken">
+          <del>é então tipo</del> eu queria saber se você pode me mandar o relatório até sexta
+          <del>né</del> porque <del>o</del> o cliente pediu pra gente apresentar na reunião de
+          <del>segunda não pera</del> terça de manhã
+        </p>
+        <p class="marks" aria-hidden="true">
+          <span>tirou muletas</span><span>tirou a repetição</span><span>ficou só a correção</span>
+        </p>
+        <div class="field" role="img" aria-label="Texto inserido no campo">
+          <span class="field__label">Vai para o campo</span>
+          <p>Gostaria de saber se você pode me enviar o relatório até sexta-feira, pois o cliente pediu que o apresentássemos na reunião de terça-feira pela manhã.<span class="caret"></span></p>
+        </div>
+        <div class="kbd" aria-hidden="true">
+          <div class="kbd__row"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="kbd__row"><i class="fn"></i><i></i><i></i><i class="space">● Ouvindo… solte para inserir</i><i></i><i class="go"></i></div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section id="recursos" class="section">
+    <div class="wrap">
+      <h2>Feito para você parar de digitar</h2>
+      <p class="section__lede">Cada recurso existe para que falar seja mais rápido do que digitar, inclusive nas tarefas chatas.</p>
+      <dl class="notes">
+        <div class="note">
+          <dt>Barra de espaço</dt>
+          <dd><h3>Segure, fale, solte</h3><p>Segure a barra de espaço e fale. Ao soltar, o texto entra no campo já revisado, sem abrir nenhum painel. Para ditados longos, toque no microfone e acompanhe a prévia ao vivo.</p></dd>
+        </div>
+        <div class="note">
+          <dt>Revisão</dt>
+          <dd><h3>Português na norma-padrão</h3><p>Some com “tipo”, “aí”, repetições e autocorreções (“na segunda, não, na terça” vira “na terça”). Acerta crase, pontuação, concordância e a grafia de termos em inglês. Prefere algo mais leve? Escolha o estilo Natural ou Mensagem.</p></dd>
+        </div>
+        <div class="note">
+          <dt>Códigos</dt>
+          <dd><h3>Código de verificação por voz</h3><p>Leu o código no e-mail? Diga “quatro, oito, dois, nove, um, três” e o campo recebe <code>482913</code>. Em campos de código, o teclado entende sozinho que deve escrever só números.</p></dd>
+        </div>
+        <div class="note">
+          <dt>Senhas</dt>
+          <dd><h3>Senhas soletradas, com proteção</h3><p>Diga “A maiúsculo, b, um, dois, arroba” e receba <code>Ab12@</code>. A senha aparece oculta, só entra no campo quando você confirma, não passa pela IA e não é salva. A tela do teclado fica protegida contra capturas.</p></dd>
+        </div>
+        <div class="note">
+          <dt>Ferramentas de IA</dt>
+          <dd><h3>Reescreva qualquer texto</h3><p>Selecione um trecho e deixe mais formal, mais curto, em tópicos, transforme em e-mail ou traduza. Ou diga o que quer: “transforme num convite para o aniversário da Ana”.</p></dd>
+        </div>
+        <div class="note">
+          <dt>Colar</dt>
+          <dd><h3>Cola o que você acabou de copiar</h3><p>Por três minutos, o teclado oferece colar o último texto copiado. Se ele contém um código, você cola só os números.</p></dd>
+        </div>
+        <div class="note">
+          <dt>Teclado</dt>
+          <dd><h3>Um teclado completo de verdade</h3><p>Acentos no toque longo, <kbd>ç</kbd> na própria fileira, sugestões e correção em português (“nao” vira “não”), deslizar no espaço para mover o cursor, deslizar no apagar para apagar palavras, emojis, área de transferência, modo uma mão e tema escuro.</p></dd>
+        </div>
+        <div class="note">
+          <dt>Vocabulário</dt>
+          <dd><h3>Ele aprende os seus nomes</h3><p>Cadastre nomes de pessoas, empresas e jargões. O ditado, a revisão e as sugestões passam a escrever do jeito certo.</p></dd>
+        </div>
+        <div class="note">
+          <dt>Atualizações</dt>
+          <dd><h3>Modelos que melhoram com o tempo</h3><p>Quando sai um modelo melhor, o app avisa e baixa com um toque. Cada arquivo é conferido por SHA-256 antes de rodar.</p></dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="privacidade" class="section section--alt">
+    <div class="wrap">
+      <h2>Um teclado que não espia</h2>
+      <p class="section__lede">Teclado vê tudo o que você escreve. Por isso este foi construído para que a sua voz e o seu texto nunca saiam do celular.</p>
+      <div class="privacy">
+        <ul class="checks">
+          <li><b>Voz e texto ficam no aparelho.</b> Transcrição e revisão rodam no processador do celular. Não existe servidor do teclado.</li>
+          <li><b>O que você digita nunca toca a rede.</b> A conexão serve só para baixar modelos e verificar atualizações. O código que lida com o seu texto e a sua voz não tem acesso à internet.</li>
+          <li><b>Só dois destinos permitidos.</b> Os modelos vêm do Hugging Face e as atualizações deste site. Qualquer outro endereço é bloqueado no código, inclusive em redirecionamentos.</li>
+          <li><b>Arquivos conferidos.</b> Cada modelo é fixado em uma versão exata e conferido por SHA-256 antes de ser usado.</li>
+          <li><b>Senhas e abas anônimas.</b> Nesses campos o teclado não aprende palavras, não guarda histórico nem mostra a tecla ampliada. Em campos de senha, também bloqueia capturas de tela.</li>
+          <li><b>Sem rastros.</b> O áudio é apagado da memória ao fim de cada ditado. Backup na nuvem desativado. Sem anúncios, sem contas, sem telemetria.</li>
+        </ul>
+        <div class="perms">
+          <p class="perms__title">Tudo o que o app pode acessar</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Permissão do Android</th><th>Para quê</th></tr></thead>
+              <tbody>
+                <tr><td><code>RECORD_AUDIO</code></td><td>Ouvir enquanto você dita</td></tr>
+                <tr><td><code>INTERNET</code></td><td>Baixar modelos e checar atualizações</td></tr>
+                <tr><td><code>POST_NOTIFICATIONS</code></td><td>Mostrar o progresso do download</td></tr>
+                <tr><td><code>FOREGROUND_SERVICE_DATA_SYNC</code></td><td>Continuar o download em segundo plano</td></tr>
+                <tr><td><code>VIBRATE</code></td><td>Vibração ao tocar nas teclas</td></tr>
+                <tr><td><code>WAKE_LOCK</code></td><td>Não deixar o download parar no meio</td></tr>
+                <tr><td><code>RECEIVE_BOOT_COMPLETED</code></td><td>Reagendar a busca por atualizações depois de reiniciar</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="perms__hosts">Destinos de rede permitidos: <code>huggingface.co</code>, <code>*.hf.co</code> e <code>{{PAGES_HOST}}</code></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="compatibilidade" class="section">
+    <div class="wrap">
+      <h2>Roda na maioria dos celulares</h2>
+      <p class="section__lede">Android 8.0 ou superior, processador de 64 bits. O app escolhe os modelos certos para a memória do seu aparelho e otimiza para o processador dele.</p>
+      <div class="table-wrap spaced">
+        <table class="models">
+          <thead><tr><th>Memória do celular</th><th>Voz</th><th>Revisão</th><th class="num">Download</th></tr></thead>
+          <tbody>
+            <tr><td>até 3 GB</td><td>Whisper Base</td><td>Qwen 3.5 0.8B</td><td class="num">0,9 GB</td></tr>
+            <tr><td>4 a 5 GB</td><td>Whisper Small</td><td>Qwen 3.5 2B</td><td class="num">1,5 GB</td></tr>
+            <tr><td>6 a 7 GB</td><td>Whisper Small</td><td>Gemma 4 E2B</td><td class="num">3,1 GB</td></tr>
+            <tr><td>8 GB ou mais</td><td>Whisper Large v3 Turbo</td><td>Gemma 4 E2B</td><td class="num">3,4 GB</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="aside">Celulares Huawei e Honor (EMUI) funcionam normalmente. Para ditar senhas, desative o “Teclado seguro” do sistema nas configurações de idioma e entrada.</p>
+    </div>
+  </section>
+
+  <section id="instalar" class="section section--alt">
+    <div class="wrap">
+      <h2>Instalar leva dois minutos</h2>
+      <ol class="steps">
+        <li><h3>Baixe o APK</h3><p>Toque em “Baixar” nesta página, pelo celular. Se o Android pedir, permita instalar apps do navegador.</p></li>
+        <li><h3>Ative o teclado</h3><p>Abra o app e toque em “Ativar”. Ele leva você direto à tela certa das configurações.</p></li>
+        <li><h3>Libere o microfone</h3><p>Necessário para o ditado. O áudio nunca é gravado em arquivo nem enviado.</p></li>
+        <li><h3>Baixe os modelos</h3><p>Um toque baixa o pacote recomendado para o seu celular. Use Wi-Fi: são entre 0,9 e 3,4 GB, uma única vez.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="perguntas" class="section">
+    <div class="wrap">
+      <h2>Perguntas frequentes</h2>
+      <div class="faq">
+        <details>
+          <summary>É seguro instalar um APK de fora da loja?</summary>
+          <p>Este APK é compilado automaticamente a partir do código público no GitHub e assinado sempre com a mesma chave. Confira o SHA-256 no rodapé desta página. O app não pede acesso a contatos, arquivos, localização nem SMS.</p>
+        </details>
+        <details>
+          <summary>Por que não está na Play Store?</summary>
+          <p>Por enquanto a distribuição é por aqui. O app já está preparado para lojas como a Google Play e a AppGallery, com o nome traduzido em mais de 70 idiomas.</p>
+        </details>
+        <details>
+          <summary>Funciona sem internet?</summary>
+          <p>Sim. Depois de baixar os modelos, o ditado, a revisão e o teclado funcionam totalmente offline.</p>
+        </details>
+        <details>
+          <summary>Gasta muita bateria?</summary>
+          <p>Só enquanto você dita. Os modelos ficam carregados por alguns minutos após o uso, para responder rápido, e depois a memória é liberada. Você ajusta esse tempo nas configurações.</p>
+        </details>
+        <details>
+          <summary>Funciona em outros idiomas?</summary>
+          <p>Sim. O padrão é português do Brasil, com a melhor precisão, mas você pode ditar em inglês, espanhol, francês, italiano e alemão, ou deixar o idioma em detecção automática.</p>
+        </details>
+        <details>
+          <summary>Como sugerir melhorias?</summary>
+          <p>Abra uma issue no GitHub ou deixe nos comentários do canal. As novas versões aparecem aqui, em “Novidades”.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="novidades" class="section section--alt">
+    <div class="wrap">
+      <h2>Novidades</h2>
+      <div class="changelog">
+{{CHANGELOG}}
+      </div>
+      <p class="aside">Versões anteriores ficam disponíveis na <a href="{{RELEASES_URL}}" rel="noopener">página de versões no GitHub</a>.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__grid">
+    <div>
+      <p class="foot__brand">Teclado do Fernando Godinho</p>
+      <p>Código aberto sob a licença Apache 2.0. Whisper, Gemma e Qwen pertencem aos seus autores.</p>
+    </div>
+    <div class="checksum">
+      <p class="checksum__label">SHA-256 do APK {{VERSION}}</p>
+      <code id="sha">{{SHA256}}</code>
+      <button type="button" id="copy-sha" class="btn btn--ghost btn--small">Copiar</button>
+    </div>
+  </div>
+</footer>
+<script src="app.js"></script>
+<!-- /BODY -->
+</body>
+</html>

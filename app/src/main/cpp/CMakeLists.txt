@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(escriba LANGUAGES C CXX)
+project(teclado LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
@@ -33,10 +33,10 @@ endif()
 add_subdirectory(${LLAMA_DIR} build-llama)
 
 # ---------------------------------------------------------------------------
-# Escriba engine: whisper.cpp (speech) + llama.cpp (text polishing) + JNI
+# Engine: whisper.cpp (speech) + llama.cpp (text polishing) + JNI
 # whisper.cpp is compiled against the same ggml as llama.cpp.
 # ---------------------------------------------------------------------------
-add_library(escriba SHARED
+add_library(teclado SHARED
     jni_onload.cpp
     jni_whisper.cpp
     jni_llm.cpp
@@ -44,7 +44,7 @@ add_library(escriba SHARED
     ${WHISPER_DIR}/src/aneforge/whisper-aneforge.cpp
 )
 
-target_include_directories(escriba PRIVATE
+target_include_directories(teclado PRIVATE
     ${WHISPER_DIR}/include
     ${WHISPER_DIR}/src
     ${LLAMA_DIR}/include
@@ -57,8 +57,17 @@ string(REGEX REPLACE "[^0-9;]" "" _wv "${_wv}")
 string(REPLACE ";" "." WHISPER_VERSION "${_wv}")
 message(STATUS "whisper.cpp version: ${WHISPER_VERSION}")
 
-target_compile_definitions(escriba PRIVATE WHISPER_VERSION="${WHISPER_VERSION}")
-target_compile_options(escriba PRIVATE -O3 -fvisibility=hidden -fvisibility-inlines-hidden -Wno-deprecated-declarations)
+target_compile_definitions(teclado PRIVATE WHISPER_VERSION="${WHISPER_VERSION}")
+# Hardening: stack protector, fortified libc calls, format-string checks, full RELRO,
+# non-executable stack and hidden symbols (only the JNI entry points are exported).
+target_compile_options(teclado PRIVATE
+    -O3 -fvisibility=hidden -fvisibility-inlines-hidden
+    -fstack-protector-strong -D_FORTIFY_SOURCE=2
+    -Wformat -Werror=format-security
+    -Wno-deprecated-declarations)
 
-target_link_libraries(escriba PRIVATE llama llama-common ggml ggml-base android log)
-target_link_options(escriba PRIVATE -Wl,--gc-sections -Wl,-z,max-page-size=16384)
+target_link_libraries(teclado PRIVATE llama llama-common ggml ggml-base android log)
+target_link_options(teclado PRIVATE
+    -Wl,--gc-sections
+    -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
+    -Wl,-z,max-page-size=16384)

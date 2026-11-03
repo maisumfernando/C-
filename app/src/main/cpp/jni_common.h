@@ -1,4 +1,4 @@
-// Shared helpers for the Escriba JNI bridge.
+// Shared helpers for the JNI bridge.
 #pragma once
 
 #include <android/log.h>
@@ -6,12 +6,12 @@
 
 #include <string>
 
-#define ESC_TAG "EscribaNative"
+#define ESC_TAG "TecladoNative"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, ESC_TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN, ESC_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, ESC_TAG, __VA_ARGS__)
 
-namespace escriba {
+namespace teclado {
 
 // Converts a Java string to UTF-8 without relying on JNI's "modified UTF-8",
 // which breaks characters outside the BMP (emoji) and embedded NULs.
@@ -27,4 +27,4 @@ size_t incomplete_utf8_tail(const std::string & s);
 
 JavaVM * java_vm();
 
-} // namespace escriba
+} // namespace teclado

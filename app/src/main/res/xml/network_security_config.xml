@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  HTTPS only, and only certificates from the system's trusted authorities. Certificates
+  installed by the user (or by malware posing as a user CA) are not trusted, which blocks
+  interception proxies. Debug overrides are intentionally absent.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

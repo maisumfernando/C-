@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -6,20 +7,27 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// CI provides a monotonically increasing build number so every release installs over the previous one.
-val buildNumber: Int = (System.getenv("ESCRIBA_BUILD_NUMBER") ?: System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
+// Semantic version from version.properties; versionCode = major*10000 + minor*100 + patch,
+// so every release installs as an update of the previous one.
+val appVersionName: String = Properties().run {
+    rootProject.file("version.properties").inputStream().use { load(it) }
+    getProperty("versionName")
+}
+val appVersionCode: Int = appVersionName.split(".").map { it.toInt() }.let { (major, minor, patch) ->
+    major * 10000 + minor * 100 + patch
+}
 
 android {
-    namespace = "app.escriba"
+    namespace = "com.fernandogodinho.teclado"
     compileSdk = 36
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
-        applicationId = "app.escriba"
-        minSdk = 29
+        applicationId = "com.fernandogodinho.teclado"
+        minSdk = 26
         targetSdk = 36
-        versionCode = buildNumber
-        versionName = "1.0.$buildNumber"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         ndk {
             // Modern Android phones are all 64-bit ARM; keeping a single ABI keeps the APK lean.
@@ -51,14 +59,14 @@ android {
 
     // Release signing comes only from the environment (CI secrets); no key lives in the repository.
     // Without it, builds fall back to the debug key so the APK is still installable.
-    val releaseKeystore = System.getenv("ESCRIBA_KEYSTORE_FILE")?.let { file(it) }?.takeIf { it.isFile }
+    val releaseKeystore = System.getenv("TECLADO_KEYSTORE_FILE")?.let { file(it) }?.takeIf { it.isFile }
     signingConfigs {
         if (releaseKeystore != null) {
             create("release") {
                 storeFile = releaseKeystore
-                storePassword = System.getenv("ESCRIBA_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("ESCRIBA_KEY_ALIAS") ?: "escriba"
-                keyPassword = System.getenv("ESCRIBA_KEY_PASSWORD") ?: System.getenv("ESCRIBA_KEYSTORE_PASSWORD")
+                storePassword = System.getenv("TECLADO_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("TECLADO_KEY_ALIAS") ?: "teclado"
+                keyPassword = System.getenv("TECLADO_KEY_PASSWORD") ?: System.getenv("TECLADO_KEYSTORE_PASSWORD")
             }
         }
     }
@@ -155,6 +163,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)
+    testImplementation(libs.org.json)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.work.testing)
     testImplementation(libs.roborazzi)

@@ -10,7 +10,7 @@
 #include <sstream>
 #include <vector>
 
-namespace escriba {
+namespace teclado {
 
 static JavaVM * g_vm = nullptr;
 
@@ -125,9 +125,9 @@ static void android_log_cb(ggml_log_level level, const char * text, void * /*use
     }
 }
 
-} // namespace escriba
+} // namespace teclado
 
-using namespace escriba;
+using namespace teclado;
 
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM * vm, void * /*reserved*/) {
     g_vm = vm;
@@ -137,7 +137,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM * vm, void * /*reserved*/) {
 static std::once_flag g_init_once;
 
 extern "C" JNIEXPORT void JNICALL
-Java_app_escriba_engine_NativeBridge_nativeInit(JNIEnv * env, jobject /*thiz*/, jstring jlib_dir) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_nativeInit(JNIEnv * env, jobject /*thiz*/, jstring jlib_dir) {
     const std::string lib_dir = to_utf8(env, jlib_dir);
     std::call_once(g_init_once, [&]() {
         llama_log_set(android_log_cb, nullptr);
@@ -150,7 +150,7 @@ Java_app_escriba_engine_NativeBridge_nativeInit(JNIEnv * env, jobject /*thiz*/, 
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_app_escriba_engine_NativeBridge_systemInfo(JNIEnv * env, jobject /*thiz*/) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_systemInfo(JNIEnv * env, jobject /*thiz*/) {
     std::ostringstream ss;
     ss << "whisper.cpp " << whisper_version() << "\n";
     for (size_t i = 0; i < ggml_backend_dev_count(); ++i) {

@@ -1,0 +1,9 @@
+A complete keyboard with voice dictation that delivers polished, ready-to-send text.
+
+• Hold the space bar, speak, release: the text arrives already polished.
+• On-device AI removes filler words, repetitions and spoken self-corrections, and fixes grammar and punctuation.
+• Dictate verification codes and spelled-out passwords safely.
+• AI writing tools: more formal, shorter, bullet points, e-mail, translation and spoken commands.
+
+Privacy: Whisper and the language model run on your phone. Nothing you say or type is sent anywhere.
+No ads, no accounts, no telemetry. Open source (Apache 2.0). Optimised for Brazilian Portuguese.

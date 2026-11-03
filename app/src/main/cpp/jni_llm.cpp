@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-using namespace escriba;
+using namespace teclado;
 
 namespace {
 
@@ -47,12 +47,15 @@ struct Message {
 
 std::vector<Message> read_messages(JNIEnv * env, jobjectArray jroles, jobjectArray jcontents) {
     std::vector<Message> msgs;
-    const jsize n = std::min(env->GetArrayLength(jroles), env->GetArrayLength(jcontents));
+    if (jroles == nullptr || jcontents == nullptr) return msgs;
+    const jsize n = std::min<jsize>(std::min(env->GetArrayLength(jroles), env->GetArrayLength(jcontents)), 64);
     msgs.reserve(n);
     for (jsize i = 0; i < n; ++i) {
         auto jr = static_cast<jstring>(env->GetObjectArrayElement(jroles, i));
         auto jc = static_cast<jstring>(env->GetObjectArrayElement(jcontents, i));
-        msgs.push_back({to_utf8(env, jr), to_utf8(env, jc)});
+        std::string role = to_utf8(env, jr);
+        if (role != "system" && role != "user" && role != "assistant") role = "user";
+        msgs.push_back({role, to_utf8(env, jc)});
         env->DeleteLocalRef(jr);
         env->DeleteLocalRef(jc);
     }
@@ -118,6 +121,21 @@ size_t reuse_cache(LlmHandle * h, const std::vector<llama_token> & tokens) {
     if (lcp == h->cached.size()) {
         return lcp;
     }
+    // If the saved prefix snapshot covers more of the new prompt than the current cache
+    // (e.g. after using the writing tools), restoring it is cheaper than re-evaluating.
+    const auto & sn = h->snapshot_tokens;
+    const bool snapshot_fits = !h->snapshot.empty() && sn.size() < tokens.size() &&
+                               std::equal(sn.begin(), sn.end(), tokens.begin());
+    if (snapshot_fits && sn.size() > lcp + 32) {
+        llama_memory_clear(mem, true);
+        h->cached.clear();
+        if (llama_state_seq_set_data(h->ctx, h->snapshot.data(), h->snapshot.size(), 0) > 0) {
+            h->cached = sn;
+            return sn.size();
+        }
+        llama_memory_clear(mem, true);
+        return 0;
+    }
     if (lcp > 0 && llama_memory_seq_rm(mem, 0, static_cast<llama_pos>(lcp), -1)) {
         h->cached.resize(lcp);
         return lcp;
@@ -166,7 +184,7 @@ void reset_cache(LlmHandle * h) {
 } // namespace
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_app_escriba_engine_NativeBridge_llmLoad(JNIEnv * env, jobject /*thiz*/, jstring jpath, jint n_ctx, jint n_threads) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_llmLoad(JNIEnv * env, jobject /*thiz*/, jstring jpath, jint n_ctx, jint n_threads) {
     const std::string path = to_utf8(env, jpath);
 
     llama_model_params mp = llama_model_default_params();
@@ -215,7 +233,7 @@ Java_app_escriba_engine_NativeBridge_llmLoad(JNIEnv * env, jobject /*thiz*/, jst
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_app_escriba_engine_NativeBridge_llmFree(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_llmFree(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
     auto * h = reinterpret_cast<LlmHandle *>(handle);
     if (h == nullptr) return;
     h->abort = true;
@@ -231,13 +249,13 @@ Java_app_escriba_engine_NativeBridge_llmFree(JNIEnv * /*env*/, jobject /*thiz*/,
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_app_escriba_engine_NativeBridge_llmAbort(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_llmAbort(JNIEnv * /*env*/, jobject /*thiz*/, jlong handle) {
     auto * h = reinterpret_cast<LlmHandle *>(handle);
     if (h != nullptr) h->abort = true;
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_app_escriba_engine_NativeBridge_llmCountTokens(JNIEnv * env, jobject /*thiz*/, jlong handle, jstring jtext) {
+Java_com_fernandogodinho_teclado_engine_NativeBridge_llmCountTokens(JNIEnv * env, jobject /*thiz*/, jlong handle, jstring jtext) {
     auto * h = reinterpret_cast<LlmHandle *>(handle);
     if (h == nullptr || h->model == nullptr) return -1;
     const std::string text = to_utf8(env, jtext);
@@ -246,7 +264,7 @@ Java_app_escriba_engine_NativeBridge_llmCountTokens(JNIEnv * env, jobject /*thiz
 
 /** Evaluates the fixed part of the prompt ahead of time so the first real request is fast. */
 extern "C" JNIEXPORT jboolean JNICALL
-Java_app_escriba_engine_NativeBridge_llmWarmup(JNIEnv * env, jobject /*thiz*/, jlong handle,
+Java_com_fernandogodinho_teclado_engine_NativeBridge_llmWarmup(JNIEnv * env, jobject /*thiz*/, jlong handle,
                                                jobjectArray jroles, jobjectArray jcontents) {
     auto * h = reinterpret_cast<LlmHandle *>(handle);
     if (h == nullptr || h->ctx == nullptr) return JNI_FALSE;
@@ -282,12 +300,13 @@ Java_app_escriba_engine_NativeBridge_llmWarmup(JNIEnv * env, jobject /*thiz*/, j
  * (returning false stops generation). Returns the full answer, or null on failure.
  */
 extern "C" JNIEXPORT jstring JNICALL
-Java_app_escriba_engine_NativeBridge_llmGenerate(JNIEnv * env, jobject /*thiz*/, jlong handle,
+Java_com_fernandogodinho_teclado_engine_NativeBridge_llmGenerate(JNIEnv * env, jobject /*thiz*/, jlong handle,
                                                  jobjectArray jroles, jobjectArray jcontents,
                                                  jint max_tokens, jobject callback) {
     auto * h = reinterpret_cast<LlmHandle *>(handle);
     if (h == nullptr || h->ctx == nullptr) return nullptr;
     const auto msgs = read_messages(env, jroles, jcontents);
+    if (msgs.empty() || max_tokens <= 0) return nullptr;
 
     jmethodID on_token = nullptr;
     if (callback != nullptr) {

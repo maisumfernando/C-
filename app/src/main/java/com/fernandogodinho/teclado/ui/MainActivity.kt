@@ -1,0 +1,198 @@
+package com.fernandogodinho.teclado.ui
+
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import android.provider.Settings
+import android.view.inputmethod.InputMethodManager
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
+import com.fernandogodinho.teclado.tecladoApp
+import kotlinx.coroutines.launch
+import com.fernandogodinho.teclado.ui.screens.AboutScreen
+import com.fernandogodinho.teclado.ui.screens.DictationSettingsScreen
+import com.fernandogodinho.teclado.ui.screens.HomeScreen
+import com.fernandogodinho.teclado.ui.screens.KeyboardSettingsScreen
+import com.fernandogodinho.teclado.ui.screens.ModelsScreen
+import com.fernandogodinho.teclado.ui.screens.OnboardingScreen
+import com.fernandogodinho.teclado.ui.screens.VocabularyScreen
+import com.fernandogodinho.teclado.ui.theme.TecladoTheme
+
+/** What the keyboard still needs before it can be used. */
+data class SetupState(
+    val enabled: Boolean,
+    val selected: Boolean,
+    val micGranted: Boolean,
+    val speechModelReady: Boolean,
+    val textModelReady: Boolean,
+) {
+    val keyboardReady: Boolean get() = enabled && selected
+    val complete: Boolean get() = keyboardReady && micGranted && speechModelReady
+
+    companion object {
+        fun read(context: Context): SetupState {
+            val imm = context.getSystemService(InputMethodManager::class.java)
+            val enabled = imm?.enabledInputMethodList?.any { it.packageName == context.packageName } == true
+            val current = Settings.Secure.getString(context.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD).orEmpty()
+            val app = context.tecladoApp
+            return SetupState(
+                enabled = enabled,
+                selected = current.startsWith(context.packageName + "/"),
+                micGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED,
+                speechModelReady = app.engines.selectedSpeechModel() != null,
+                textModelReady = app.engines.selectedTextModel() != null,
+            )
+        }
+    }
+}
+
+class MainActivity : ComponentActivity() {
+
+    private var setup by mutableStateOf<SetupState?>(null)
+    /** Route requested by the keyboard while this screen was already open (singleTask). */
+    private var requestedRoute by mutableStateOf<String?>(null)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+        // Only known screens can be opened from outside; anything else falls back to home.
+        val initialRoute = intent?.getStringExtra(EXTRA_ROUTE)?.takeIf { it in ROUTES }
+        setContent {
+            val settings by tecladoApp.settings.settings.collectAsState()
+            val installed by tecladoApp.models.installed.collectAsState()
+            TecladoTheme(settings.theme) {
+                // Re-evaluated on resume and whenever the installed models change.
+                val current = remember(installed, setup) { SetupState.read(this@MainActivity) }
+                var route by rememberSaveable { mutableStateOf(initialRoute ?: ROUTE_HOME) }
+                LaunchedEffect(requestedRoute) {
+                    requestedRoute?.let { route = it; requestedRoute = null }
+                }
+                val showOnboarding = !settings.onboardingDone && !current.complete
+                if (showOnboarding && route == ROUTE_HOME) {
+                    OnboardingScreen(
+                        setup = current,
+                        onEnable = { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
+                        onSelect = { showPicker() },
+                        onMic = { requestMic() },
+                        onModels = { route = ROUTE_MODELS },
+                        onFinish = { tecladoApp.settings.setOnboardingDone(true) },
+                    )
+                } else {
+                    BackHandler(enabled = route != ROUTE_HOME) { route = ROUTE_HOME }
+                    AnimatedContent(
+                        targetState = route,
+                        transitionSpec = {
+                            if (targetState == ROUTE_HOME) {
+                                (slideInHorizontally(tween(260)) { -it / 5 } + fadeIn(tween(220))) togetherWith
+                                    (slideOutHorizontally(tween(260)) { it / 5 } + fadeOut(tween(160)))
+                            } else {
+                                (slideInHorizontally(tween(260)) { it / 5 } + fadeIn(tween(220))) togetherWith
+                                    (slideOutHorizontally(tween(260)) { -it / 5 } + fadeOut(tween(160)))
+                            }
+                        },
+                        label = "route",
+                    ) { r ->
+                        Route(
+                            route = r,
+                            setup = current,
+                            navigate = { route = it },
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun Route(route: String, setup: SetupState, navigate: (String) -> Unit) {
+        val back = { navigate(ROUTE_HOME) }
+        when (route) {
+            ROUTE_MODELS -> ModelsScreen(onBack = back)
+            ROUTE_DICTATION -> DictationSettingsScreen(onBack = back)
+            ROUTE_KEYBOARD -> KeyboardSettingsScreen(onBack = back)
+            ROUTE_VOCABULARY -> VocabularyScreen(onBack = back)
+            ROUTE_ABOUT -> AboutScreen(onBack = back)
+            else -> HomeScreen(
+                setup = setup,
+                navigate = navigate,
+                onEnable = { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
+                onSelect = { showPicker() },
+                onMic = { requestMic() },
+            )
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        requestedRoute = intent.getStringExtra(EXTRA_ROUTE)?.takeIf { it in ROUTES }
+    }
+
+    private fun showPicker() {
+        getSystemService(InputMethodManager::class.java)?.showInputMethodPicker()
+    }
+
+    private fun requestMic() {
+        val perms = buildList {
+            add(Manifest.permission.RECORD_AUDIO)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        requestPermissions(perms.toTypedArray(), 1)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        refresh()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refresh()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        // The input method picker is a system dialog: re-check when it closes.
+        if (hasFocus) refresh()
+    }
+
+    private fun refresh() {
+        tecladoApp.models.refresh()
+        setup = SetupState.read(this)
+        val app = tecladoApp
+        if (app.settings.current.checkUpdates && System.currentTimeMillis() - app.updates.status.value.checkedAt > 12 * 3600_000L) {
+            app.appScope.launch { runCatching { app.updates.check() } }
+        }
+    }
+
+    companion object {
+        const val EXTRA_ROUTE = "route"
+        const val ROUTE_HOME = "home"
+        const val ROUTE_MODELS = "models"
+        const val ROUTE_DICTATION = "dictation"
+        const val ROUTE_KEYBOARD = "keyboard"
+        const val ROUTE_VOCABULARY = "vocabulary"
+        const val ROUTE_ABOUT = "about"
+        private val ROUTES = setOf(ROUTE_HOME, ROUTE_MODELS, ROUTE_DICTATION, ROUTE_KEYBOARD, ROUTE_VOCABULARY, ROUTE_ABOUT)
+    }
+}

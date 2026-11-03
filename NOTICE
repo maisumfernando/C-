@@ -1,0 +1,15 @@
+Teclado do Fernando Godinho
+Copyright 2026 Fernando Godinho
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product includes third-party software and data:
+- whisper.cpp and llama.cpp (ggml-org), MIT License — third_party/
+- KleidiAI (Arm), Apache License 2.0 — fetched at build time by ggml
+- Silero VAD model (ggml conversion), MIT License — app/src/main/assets/models/silero-vad.bin
+- Word frequency lists derived from FrequencyWords by Hermit Dave, CC BY-SA 4.0 — app/src/main/assets/dict/
+- Emoji data derived from Unicode emoji-test.txt, Unicode License v3 — app/src/main/assets/emoji.txt
+- Bricolage Grotesque, Figtree and JetBrains Mono fonts, SIL Open Font License 1.1 — site/fonts/
+
+AI models are downloaded by the app at the user's request and are not part of this repository:
+- OpenAI Whisper (MIT), Google Gemma 4 (Apache 2.0), Qwen 3.5 (Apache 2.0).

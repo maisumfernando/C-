@@ -10,6 +10,7 @@ work = "2.10.5"
 coroutines = "1.10.2"
 junit = "4.13.2"
 robolectric = "4.16"
+orgjson = "20240303"
 roborazzi = "1.50.0"
 
 [libraries]
@@ -33,6 +34,7 @@ androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 junit = { module = "junit:junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+org-json = { module = "org.json:json", version.ref = "orgjson" }
 roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
 androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }

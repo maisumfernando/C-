@@ -1,0 +1,87 @@
+name: Build APK
+
+on:
+  push:
+    branches: ["claude/android-keyboard-whisper-dictation-bd4ozi", "main", "master"]
+    paths-ignore: ["**.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      ESCRIBA_BUILD_NUMBER: ${{ github.run_number }}
+      HAS_SIGNING_SECRET: ${{ secrets.ESCRIBA_KEYSTORE_BASE64 != '' }}
+    steps:
+      - name: Checkout (with whisper.cpp and llama.cpp)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Android SDK packages
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null
+          "$SDKM" "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358" "cmake;3.31.6" > /dev/null
+
+      # Optional: a permanent signing key kept in repository secrets lets every new APK
+      # install as an update. Without it, builds are signed with a temporary key.
+      - name: Load signing key from secrets
+        if: env.HAS_SIGNING_SECRET == 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.ESCRIBA_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ESCRIBA_KEYSTORE_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "ESCRIBA_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          echo "ESCRIBA_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Unit tests
+        run: ./gradlew --no-daemon :app:testReleaseUnitTest
+
+      - name: Build release APK
+        run: ./gradlew --no-daemon :app:assembleRelease
+
+      - name: Name the APK
+        run: cp app/build/outputs/apk/release/app-release.apk "Escriba-1.0.${{ github.run_number }}.apk"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Escriba-1.0.${{ github.run_number }}
+          path: Escriba-*.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Escriba 1.0.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          files: Escriba-*.apk
+          body: |
+            ## Como instalar
+            1. No celular, toque em **Escriba-1.0.${{ github.run_number }}.apk** logo abaixo para baixar.
+            2. Abra o arquivo baixado. Se o Android pedir, permita "instalar apps desta fonte".
+            3. Abra o app **Escriba** e siga os 4 passos da tela inicial (ativar o teclado, selecioná-lo, permitir o microfone e baixar os modelos).
+
+            Se o Android disser que o app não pode ser instalado por conflito com uma versão anterior, desinstale a versão antiga e instale esta.
+
+            Commit: ${{ github.sha }}

@@ -1,0 +1,22 @@
+# Gradle / Android
+.gradle/
+build/
+/local.properties
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Signing keys never belong in the repository
+*.jks
+*.keystore
+keystore.properties

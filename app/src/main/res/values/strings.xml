@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Escriba</string>
+    <string name="ime_name">Escriba · Teclado com ditado</string>
+    <string name="subtype_pt_br">Português (Brasil)</string>
+</resources>

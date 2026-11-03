@@ -22,8 +22,11 @@ Ao terminar uma sessão de trabalho, **atualize este arquivo e o diário**.
 - **Nunca foi testado em um aparelho real** até a sessão 2: compilado, testes unitários e capturas de tela
   (Robolectric) passam, mas desempenho real e qualidade dos modelos no celular não foram medidos.
   Peça ao dono feedback de uso real antes de grandes refatorações.
-- O primeiro push ao GitHub foi bloqueado por falta de acesso do app Claude ao repositório
-  (ver "Publicação"). Confira `git log origin/<branch>` antes de supor que algo está publicado.
+- Código publicado no branch `claude/android-keyboard-whisper-dictation-bd4ozi` (o push funcionou na
+  segunda tentativa, depois que o dono liberou o acesso). Releases e site só são publicados quando os
+  secrets de assinatura existem (ver "Publicação"). O dono recebeu o APK 1.0.0 assinado com a chave oficial
+  diretamente na sessão 1, e um arquivo privado com a chave para cadastrar nos secrets.
+- Prévia da página (artifact privado do dono): https://claude.ai/artifact/3bn2jntjLVTuyY6HojJM2G
 
 ## Estrutura
 
@@ -93,7 +96,9 @@ cmdline-tools, `platforms;android-36`, `build-tools;36.0.0`, `ndk;28.2.13676358`
 ./gradlew :app:testReleaseUnitTest               # lógica (dicionário, SpokenText, catálogo, limpeza)
 ./gradlew :app:testDebugUnitTest                 # + capturas de tela em app/build/screenshots/
 ./gradlew :app:assembleRelease                   # APK (assinado com debug se não houver TECLADO_KEYSTORE_FILE)
-./gradlew --write-verification-metadata sha256 :app:assembleRelease :app:testReleaseUnitTest :app:testDebugUnitTest
+# Regere a verificação de dependências com um cache VAZIO (um cache antigo esconde entradas e a CI falha):
+GRADLE_USER_HOME=/tmp/gradle-limpo ./gradlew --write-verification-metadata sha256 help :app:assembleRelease :app:testReleaseUnitTest :app:testDebugUnitTest
+#   (copie antes o init script do espelho para /tmp/gradle-limpo/init.d/)
 python3 site/build.py --out _site --apk app/build/outputs/apk/release/app-release.apk
 ```
 A primeira compilação nativa leva ~5 min (7 variantes de CPU do ggml + KleidiAI baixado do GitHub).

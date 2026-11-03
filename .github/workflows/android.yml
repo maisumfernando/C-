@@ -6,6 +6,8 @@ name: Build, release and publish
 on:
   push:
     branches: ["claude/android-keyboard-whisper-dictation-bd4ozi", "main", "master"]
+    # Documentation-only changes do not need a new build.
+    paths-ignore: ["CLAUDE.md", "README.md", "SECURITY.md", "docs/**", "fastlane/**"]
   workflow_dispatch:
 
 # Least privilege: only what is needed to create releases and push the gh-pages branch.

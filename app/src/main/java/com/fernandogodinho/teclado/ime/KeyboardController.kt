@@ -142,6 +142,11 @@ class KeyboardController(
     val clipboard = ClipboardHistory(service)
 
     private var dictionary: Dictionary? = null
+    private var swipeDecoder: com.fernandogodinho.teclado.ime.suggest.SwipeDecoder? = null
+
+    /** The last word written by swiping: its alternatives stay in the bar until the user moves on. */
+    private data class SwipeInsert(val inserted: String, val prefix: String, val options: List<String>)
+    private var lastSwipe: SwipeInsert? = null
     private var editorInfo: EditorInfo? = null
     private val ic: InputConnection? get() = service.currentInputConnection
 
@@ -165,10 +170,13 @@ class KeyboardController(
             val dict = runCatching { Dictionary.load(service) }.getOrNull() ?: return@launch
             dict.addUserWords(app.settings.current.vocabulary + app.learnedWords.words.value)
             dictionary = dict
+            swipeDecoder = com.fernandogodinho.teclado.ime.suggest.SwipeDecoder(dict.swipeEntries())
+                .also { it.setUserWords(dict.userWords(), SWIPE_USER_SCORE) }
         }
         scope.launch {
             app.learnedWords.words.collect { learned ->
                 dictionary?.addUserWords(app.settings.current.vocabulary + learned)
+                dictionary?.let { d -> swipeDecoder?.setUserWords(d.userWords(), SWIPE_USER_SCORE) }
             }
         }
     }
@@ -374,6 +382,20 @@ class KeyboardController(
         val ic = ic ?: return
         if (!repeat) backspaceRepeats = 0 else backspaceRepeats++
 
+        // Right after a swipe, backspace removes the whole word (as on the big keyboards).
+        lastSwipe?.let { ls ->
+            lastSwipe = null
+            if (!repeat && ic.getTextBeforeCursor(ls.inserted.length, 0)?.toString() == ls.inserted) {
+                ic.deleteSurroundingText(ls.inserted.length, 0)
+                cursorBelief -= ls.inserted.length
+                autoSpace = false
+                word.clear()
+                publishSuggestions()
+                updateAutoCaps()
+                return
+            }
+        }
+
         lastCorrection?.let { (original, corrected) ->
             lastCorrection = null
             val before = ic.getTextBeforeCursor(corrected.length + 1, 0)?.toString()
@@ -551,6 +573,19 @@ class KeyboardController(
 
     fun pickSuggestion(s: Suggestion) {
         val ic = ic ?: return
+        lastSwipe?.let { ls ->
+            if (s.text in ls.options && ic.getTextBeforeCursor(ls.inserted.length, 0)?.toString() == ls.inserted) {
+                val replacement = ls.prefix + s.text + " "
+                ic.beginBatchEdit()
+                ic.deleteSurroundingText(ls.inserted.length, 0)
+                ic.commitText(replacement, 1)
+                ic.endBatchEdit()
+                cursorBelief += replacement.length - ls.inserted.length
+                lastSwipe = ls.copy(inserted = replacement, options = listOf(s.text) + (ls.options - s.text))
+                suggestions = swipeAlternatives(lastSwipe!!)
+                return
+            }
+        }
         val typed = word.toString()
         ic.beginBatchEdit()
         if (typed.isNotEmpty()) ic.deleteSurroundingText(typed.length, 0)
@@ -576,6 +611,14 @@ class KeyboardController(
     private fun publishSuggestions() {
         refreshSmartChips()
         suggestJob?.cancel()
+        lastSwipe?.let { ls ->
+            val before = ic?.getTextBeforeCursor(ls.inserted.length, 0)?.toString()
+            if (word.isEmpty() && before == ls.inserted) {
+                suggestions = swipeAlternatives(ls)
+                return
+            }
+            lastSwipe = null
+        }
         val typed = word.toString()
         if (typed.isNotEmpty()) pasteChip = null
         if (typed.isEmpty() || !settings.suggestions || privateField || layoutMode != LayoutMode.LETTERS) {
@@ -1187,6 +1230,51 @@ class KeyboardController(
     }
 
     // ---------------------------------------------------------------------------------------
+    // Swipe typing
+    // ---------------------------------------------------------------------------------------
+
+    /** Swiping works on the letter keys, everywhere except password fields. */
+    val swipeAllowed: Boolean
+        get() = settings.swipeTyping && layoutMode == LayoutMode.LETTERS && fieldKind != FieldKind.PASSWORD && swipeDecoder != null
+
+    /** The finger was lifted after sliding over the letters: decode and write the word. */
+    fun onSwipe(xs: FloatArray, ys: FloatArray, centers: Map<Char, FloatArray>, keyWidth: Float) {
+        val decoder = swipeDecoder ?: return
+        scope.launch {
+            val words = withContext(Dispatchers.Default) { runCatching { decoder.decode(xs, ys, centers, keyWidth, 4) }.getOrDefault(emptyList()) }
+            if (words.isNotEmpty()) commitSwipe(words)
+        }
+    }
+
+    private fun commitSwipe(words: List<String>) {
+        val ic = ic ?: return
+        val state = shift
+        fun cased(w: String) = when (state) {
+            ShiftState.LOCKED -> w.uppercase()
+            ShiftState.ON -> w.replaceFirstChar { it.uppercaseChar() }
+            ShiftState.OFF -> w
+        }
+        val options = words.map(::cased).distinct()
+        val before = ic.getTextBeforeCursor(1, 0)?.toString().orEmpty()
+        // A space before the word unless we are at the start or right after an opening sign.
+        val prefix = if (before.isNotEmpty() && !before.last().isWhitespace() && before.last() !in "([{\"'“‘¿¡@#/") " " else ""
+        val inserted = prefix + options.first() + " "
+        ic.commitText(inserted, 1)
+        cursorBelief += inserted.length
+        word.clear()
+        autoSpace = true
+        lastCorrection = null
+        pasteChip = null
+        if (shift == ShiftState.ON) shift = ShiftState.OFF
+        lastSwipe = SwipeInsert(inserted, prefix, options)
+        suggestions = swipeAlternatives(lastSwipe!!)
+        updateAutoCaps()
+    }
+
+    private fun swipeAlternatives(ls: SwipeInsert): List<Suggestion> =
+        ls.options.drop(1).take(3).map { Suggestion(it) }
+
+    // ---------------------------------------------------------------------------------------
     // Local helpers: calculator, conversions, saved replies, reminders, e-mail domains
     // ---------------------------------------------------------------------------------------
 
@@ -1357,6 +1445,8 @@ class KeyboardController(
             "bol.com.br", "terra.com.br", "yahoo.com", "outlook.com.br", "hotmail.com.br",
         )
         private const val MAX_REVISION_CHARS = 4000
+        /** Prior for the user's own words when swiping (as frequent as common words). */
+        private const val SWIPE_USER_SCORE = 12f
         private val OTP_REGEX = Regex("(?<![0-9])[0-9]{4,8}(?![0-9])")
         private val CODE_HINTS = listOf("código", "codigo", "code", "otp", "verifica", "token", "2fa", "pin", "uso único")
         private val MESSAGING_APPS = listOf(

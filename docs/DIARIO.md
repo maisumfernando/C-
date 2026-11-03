@@ -116,3 +116,9 @@ sobre o Fernando com a chave Pix (app e site); implementar as sugestões do docu
   capturas de todos os temas e telas novas.
 
 **Pendências:** testar a TV com aparelhos reais; secrets de assinatura (ver CLAUDE.md); itens do backlog.
+
+**Depois:** o dono pediu digitação por deslize (swipe), considerada essencial. Feito: `SwipeDecoder` (forma +
+posição + frequência, índice por primeira/última tecla, acentos e ç), rastro desenhado sobre as teclas,
+palavra inserida com espaço automático, alternativas na barra (tocar troca a palavra), apagar remove a palavra
+inteira, ajuste "Digitação por deslize" (ligado por padrão). Teste com deslizes simulados com ruído:
+97,9% de acerto em 1º lugar e 100% entre os 3 primeiros em 96 palavras frequentes. Precisa de teste real.

@@ -16,6 +16,7 @@ nada do que você diz ou digita vai para servidor nenhum.
   aparecem ocultas, sem passar pela IA, e só entram após confirmação.
 - **Ferramentas de IA:** revisar, corrigir, mais formal, mais amigável, mais curto, em tópicos, virar e-mail,
   traduzir, ou um comando falado.
+- **Digitação por deslize:** deslize pelas letras e a palavra aparece, com alternativas na barra.
 - **Teclado completo:** acentos no toque longo, ç, sugestões e autocorreção em português, emojis,
   área de transferência, colar inteligente, modo uma mão, temas claro e escuro.
 - **Teste de velocidade:** mede os modelos no seu celular e mostra o tempo de espera de cada combinação

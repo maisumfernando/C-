@@ -86,6 +86,8 @@ data class AppSettings(
     val learnWords: Boolean = true,
     /** Touch and hold the space bar: the whole keyboard becomes a trackpad for the cursor. */
     val spaceTrackpad: Boolean = true,
+    /** Slide over the letters to write a word (swipe / gesture typing). */
+    val swipeTyping: Boolean = true,
     val adaptToneToApp: Boolean = false,
     val oneHanded: OneHandedMode = OneHandedMode.OFF,
     // TV
@@ -131,6 +133,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val smartPaste = booleanPreferencesKey("smart_paste")
         val learnWords = booleanPreferencesKey("learn_words")
         val spaceTrackpad = booleanPreferencesKey("space_trackpad")
+        val swipeTyping = booleanPreferencesKey("swipe_typing")
         val adaptTone = booleanPreferencesKey("adapt_tone_to_app")
         val oneHanded = stringPreferencesKey("one_handed")
         val checkUpdates = booleanPreferencesKey("check_updates")
@@ -175,6 +178,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
     fun setSmartPaste(v: Boolean) = update { it[K.smartPaste] = v }
     fun setLearnWords(v: Boolean) = update { it[K.learnWords] = v }
     fun setSpaceTrackpad(v: Boolean) = update { it[K.spaceTrackpad] = v }
+    fun setSwipeTyping(v: Boolean) = update { it[K.swipeTyping] = v }
     fun setAdaptToneToApp(v: Boolean) = update { it[K.adaptTone] = v }
     fun setOneHanded(v: OneHandedMode) = update { it[K.oneHanded] = v.name }
     fun setCheckUpdates(v: Boolean) = update { it[K.checkUpdates] = v }
@@ -219,6 +223,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             smartPaste = this[K.smartPaste] ?: d.smartPaste,
             learnWords = this[K.learnWords] ?: d.learnWords,
             spaceTrackpad = this[K.spaceTrackpad] ?: d.spaceTrackpad,
+            swipeTyping = this[K.swipeTyping] ?: d.swipeTyping,
             adaptToneToApp = this[K.adaptTone] ?: d.adaptToneToApp,
             oneHanded = enumOr(this[K.oneHanded], d.oneHanded),
             checkUpdates = this[K.checkUpdates] ?: d.checkUpdates,

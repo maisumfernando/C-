@@ -4,6 +4,7 @@ O formato segue versões semânticas: 1.0.1 para correções, 1.1.0 para recurso
 Cada seção abaixo vira a lista de "Novidades" no site e na página de versões.
 
 ## 1.2.0 — 2026-11-03
+- Digitação por deslize: deslize o dedo pelas letras e solte no fim da palavra. As outras opções aparecem na barra, e apagar logo em seguida remove a palavra inteira. Funciona com acentos e ç, aprende com o seu vocabulário e roda no celular.
 - Barra de espaço como trackpad: toque e segure o espaço e o teclado inteiro vira um trackpad para mover o cursor (com dois dedos, seleciona texto). O ditado fica só no botão do microfone.
 - Seis temas novos para o teclado (Grafite, Meia-noite, Sálvia, Areia, Lavanda e Alto contraste) e microfone em cor neutra no tema Clássico. Todas as cores passam por um teste automático de legibilidade.
 - Teclado na TV: digite e dite pelo celular em TVs Samsung, LG, Roku, Google TV e Android TV na mesma rede Wi-Fi. A TV avisa quando abre uma busca, e uma notificação abre a tela de digitação.

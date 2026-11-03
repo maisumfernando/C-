@@ -43,6 +43,13 @@ class Dictionary private constructor(
 
     val size: Int get() = words.size
 
+    /** Words for swipe typing (without the unaccented misspellings such as "nao"). */
+    fun swipeEntries(): Sequence<Pair<String, Float>> =
+        words.indices.asSequence().filter { !misspelling[it] }.map { words[it] to scores[it] }
+
+    /** Lowercase user words (vocabulary and learned words). */
+    fun userWords(): Set<String> = synchronized(extra) { extra.keys.toSet() }
+
     fun addUserWords(list: Collection<String>) {
         synchronized(extra) {
             extra.clear()

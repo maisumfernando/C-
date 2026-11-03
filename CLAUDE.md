@@ -55,6 +55,7 @@ app/src/main/java/com/fernandogodinho/teclado/
                                   edição de texto, botões inteligentes, prévia da IA), layouts, toque
                                   multi-dedo e trackpad, sugestões (suggest/Dictionary)
   ime/smart/                      regras locais: Calculator, UnitConverter, Reminders, SensitiveData
+  ime/suggest/SwipeDecoder.kt     digitação por deslize (caminho desenhado × caminho ideal de cada palavra)
   ime/ui/                         KeyboardRoot, KeyGrid, KeyboardTheme (7 temas), DictationPanel,
                                   WritingToolsPanel, SmartPanels (botões, respostas salvas, prévia), Panels
   tv/                             Teclado na TV: AtvProtocol/AndroidTvLink (Google TV), TvBrands (Samsung,
@@ -167,6 +168,11 @@ Para mudar a recomendação padrão ou a lista embutida, edite `ModelCatalog.kt`
 - Segurar espaço = trackpad (pedido do dono, como no iPhone; dois dedos selecionam). Ditado só pelo
   microfone (toque, ou segure o microfone para falar). Segurar emoji = trocar de teclado. Setas só são
   enviadas quando há texto naquela direção (evita o app mudar o foco para outro campo).
+- Deslize: começa quando o dedo sai de uma letra e anda mais que ~0,85 tecla (antes disso vale o toque e o
+  "deslizar para corrigir"). `SwipeDecoder` reamostra o traço e o caminho ideal de cada palavra (48 pontos),
+  soma distância de posição + forma e subtrai a frequência; candidatos só com a 1ª e a última tecla perto do
+  início e do fim. Teste com deslizes simulados: ~98% de acerto em 1º lugar. A palavra entra com espaço;
+  as alternativas ficam na barra; apagar logo depois remove a palavra. Desligado em campos de senha.
 - Temas: `KeyboardThemeId` + `KeyboardPalette`. `ThemeContrastTest` reprova qualquer par de cores abaixo do
   WCAG (texto 4,5:1, ícones 3:1), inclusive no esquema de cores do app.
 - Ferramentas de IA nunca alteram o texto direto: o resultado vai para `ToolResult`/painel de prévia
@@ -198,6 +204,7 @@ Para mudar a recomendação padrão ou a lista embutida, edite `ModelCatalog.kt`
 - Testar em outros aparelhos (Samsung, celulares simples) e ajustar tempos.
 - Medir a qualidade da revisão de cada LLM com frases reais; ajustar `Prompts.kt`.
 - Traduzir a interface (mover textos para `strings.xml`).
-- Digitação por deslize (swipe typing), layouts de outros idiomas, armeabi-v7a.
+- Deslize: medir com uso real e ajustar pesos (`PRIOR_WEIGHT`, forma × posição); previsão da próxima palavra.
+- Layouts de outros idiomas, armeabi-v7a.
 - Aceleração por GPU/NPU (OpenCL Adreno, Vulkan) com fallback seguro.
 - Publicar na Google Play/AppGallery (metadados em `fastlane/metadata/android`).

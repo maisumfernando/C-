@@ -274,6 +274,12 @@ fun KeyboardSettingsScreen(onBack: () -> Unit) {
             }
             GroupDivider()
             SwitchRow(
+                "Digitação por deslize",
+                "Deslize o dedo pelas letras sem soltar e solte no fim da palavra. As outras opções aparecem na barra; apagar logo depois remove a palavra inteira.",
+                s.swipeTyping,
+            ) { repo.setSwipeTyping(it) }
+            GroupDivider()
+            SwitchRow(
                 "Barra de espaço como trackpad",
                 "Toque e segure o espaço: o teclado inteiro vira um trackpad para mover o cursor pelo texto. Deslizar o espaço para os lados também move o cursor. Para trocar de teclado, segure o botão de emoji.",
                 s.spaceTrackpad,

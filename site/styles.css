@@ -501,6 +501,15 @@ td code { font-size: 0.78rem; }
 .checksum__label { font-family: var(--mono); font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .checksum code { overflow-wrap: anywhere; font-size: 0.78rem; max-width: 100%; }
 
+/* Swipe illustration ----------------------------------------------------------------------- */
+.art--swipe { gap: 6px; }
+.swipe-art { width: 100%; max-width: 440px; height: auto; }
+.swipe-keys rect { fill: var(--surface); stroke: var(--rule); stroke-width: 1; }
+.swipe-path { fill: none; stroke: var(--pencil); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; opacity: 0.6; stroke-dasharray: 520; stroke-dashoffset: 0; animation: draw 3s ease-in-out infinite; }
+.swipe-dot { fill: var(--pencil); }
+.swipe-word { font-family: var(--mono); font-size: 0.82rem; color: var(--graphite); }
+.swipe-word b { color: var(--ink); font-family: var(--body); font-size: 1rem; }
+
 /* Trackpad illustration -------------------------------------------------------------------- */
 .trackpad {
   position: relative; width: 100%; max-width: 520px; height: 96px; border-radius: 14px;
@@ -569,6 +578,7 @@ td code { font-size: 0.78rem; }
 @keyframes blink { 50% { opacity: 0; } }
 @keyframes wave { 50% { transform: scaleY(0.45); } }
 @keyframes ripple { from { opacity: 1; scale: 0.6; } to { opacity: 0; scale: 1.8; } }
+@keyframes draw { 0% { stroke-dashoffset: 520; } 60%, 100% { stroke-dashoffset: 0; } }
 @keyframes glide { 0%, 100% { translate: 0 0; } 50% { translate: 90px 0; } }
 @keyframes strike { from { background-size: 0 1.5px; } to { background-size: 100% 1.5px; } }
 @media (prefers-reduced-motion: reduce) {

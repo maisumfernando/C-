@@ -130,12 +130,17 @@ class KeyTouchTracker(
     var rows = 1
     var rowHeight = 1f
     var gridWidth = 1f
+    /** Centre of each letter key and the width of a letter key, for swipe typing. */
+    var letterCenters: Map<Char, FloatArray> = emptyMap()
+    var letterWidth = 1f
+    /** The finger's trail while swiping, drawn over the keys. */
+    val trail = mutableStateListOf<Offset>()
 
     val pressed = mutableStateListOf<KeySpec>()
     var preview by mutableStateOf<KeyGeo?>(null)
     var popup by mutableStateOf<AlternatesPopup?>(null)
 
-    private enum class Mode { NORMAL, POPUP, CURSOR, TRACKPAD, DELETE_SWIPE }
+    private enum class Mode { NORMAL, POPUP, CURSOR, TRACKPAD, DELETE_SWIPE, SWIPE }
 
     private inner class Track(var geo: KeyGeo, val down: Offset) {
         var mode = Mode.NORMAL
@@ -145,6 +150,8 @@ class KeyTouchTracker(
         var cursorY = down.y
         /** Latest finger position (the trackpad starts from where the finger is now). */
         var last = down
+        /** Points of a swipe over the letters. */
+        val path = ArrayList<Offset>()
         var wordsDeleted = 0
         fun cancel() {
             timer?.cancel()
@@ -175,6 +182,7 @@ class KeyTouchTracker(
     }
 
     fun reset() {
+        trail.clear()
         if (tracks.values.any { it.mode == Mode.TRACKPAD }) controller.onTrackpad(false)
         tracks.values.forEach { it.cancel() }
         tracks.clear()
@@ -298,6 +306,14 @@ class KeyTouchTracker(
                     if (settings().haptics) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                 }
             }
+            Mode.SWIPE -> {
+                val lastPoint = track.path.last()
+                if ((pos - lastPoint).getDistance() >= 2 * density) {
+                    track.path.add(pos)
+                    trail.add(pos)
+                    if (trail.size > 160) trail.removeAt(0)
+                }
+            }
             Mode.TRACKPAD -> {
                 // Horizontal: one character per step. Vertical: one line per ~half key row.
                 val stepX = 9 * density
@@ -326,6 +342,22 @@ class KeyTouchTracker(
                     return
                 }
                 if (track.consumed) return
+                // Sliding from a letter across the keyboard: swipe typing.
+                if (key.isCharacter && key.label.length == 1 && controller.swipeAllowed && tracks.size == 1 &&
+                    (pos - track.down).getDistance() > letterWidth * 0.85f
+                ) {
+                    track.cancel()
+                    track.mode = Mode.SWIPE
+                    track.consumed = true
+                    preview = null
+                    pressed.clear()
+                    track.path.add(track.down)
+                    track.path.add(pos)
+                    trail.clear()
+                    trail.add(track.down)
+                    trail.add(pos)
+                    return
+                }
                 if (key.action == KeyAction.Space && abs(pos.x - track.down.x) > 16 * density) {
                     track.cancel()
                     track.mode = Mode.CURSOR
@@ -356,6 +388,12 @@ class KeyTouchTracker(
             }
             Mode.CURSOR, Mode.DELETE_SWIPE -> Unit
             Mode.TRACKPAD -> controller.onTrackpad(false)
+            Mode.SWIPE -> {
+                trail.clear()
+                val xs = FloatArray(track.path.size) { track.path[it].x }
+                val ys = FloatArray(track.path.size) { track.path[it].y }
+                controller.onSwipe(xs, ys, letterCenters, letterWidth)
+            }
             Mode.NORMAL -> if (!track.consumed) controller.onKey(track.geo.key)
         }
     }
@@ -402,6 +440,11 @@ fun KeyGrid(
         tracker.rows = layout.rows.size
         tracker.rowHeight = rowPx
         tracker.gridWidth = widthPx
+        val letters = remember(geometry) {
+            geometry.filter { it.key.isCharacter && it.key.label.length == 1 && (it.key.label[0] in 'a'..'z' || it.key.label[0] == 'ç') }
+        }
+        tracker.letterCenters = remember(letters) { letters.associate { it.key.label[0] to floatArrayOf(it.rect.center.x, it.rect.center.y) } }
+        tracker.letterWidth = letters.firstOrNull()?.rect?.width?.plus(gapX) ?: (widthPx / 10f)
 
         Box(
             Modifier
@@ -414,6 +457,17 @@ fun KeyGrid(
             }
             tracker.preview?.let { PreviewBubble(it, controller, colors) }
             tracker.popup?.let { AlternatesView(it, controller, colors) }
+            if (tracker.trail.size > 1) {
+                val trailColor = colors.accent
+                androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                    val pts = tracker.trail
+                    val path = Path().apply {
+                        moveTo(pts[0].x, pts[0].y)
+                        for (i in 1 until pts.size) lineTo(pts[i].x, pts[i].y)
+                    }
+                    drawPath(path, trailColor.copy(alpha = 0.55f), style = Stroke(width = 7.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round, join = StrokeJoin.Round))
+                }
+            }
         }
     }
 }

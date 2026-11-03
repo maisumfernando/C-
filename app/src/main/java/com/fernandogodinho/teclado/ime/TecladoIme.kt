@@ -83,7 +83,7 @@ class TecladoIme : InputMethodService(), LifecycleOwner, ViewModelStoreOwner, Sa
     override fun onStartInputView(info: EditorInfo, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         controller.clipboard.enabled = tecladoApp.settings.current.clipboardHistory
-        controller.onStartInput(info)
+        controller.onStartInput(info, restarting)
         // Password fields: keep the keyboard out of screenshots, screen recordings and the
         // recent-apps preview so taps on keys can't be captured.
         window.window?.let { w ->

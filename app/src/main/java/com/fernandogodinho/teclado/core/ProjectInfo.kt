@@ -11,6 +11,9 @@ object ProjectInfo {
     /** Model catalog published with the website (validated and size-limited on download). */
     const val CATALOG_URL = "${WEBSITE}catalog/models.json"
 
+    /** Pix key for voluntary contributions (shown in the app and on the website). */
+    const val PIX_KEY = "fjgs@outlook.com"
+
     /** Latest released app version, published with the website. */
     const val VERSION_URL = "${WEBSITE}version.json"
 }

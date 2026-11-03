@@ -258,6 +258,75 @@ class ScreenshotTest {
     }
 
     @Test
+    fun keyboardTrackpad() {
+        keyboard { c, _ -> c.onTrackpad(true) }
+        shot("keyboard_trackpad")
+    }
+
+    @Test
+    fun keyboardSmartChips() {
+        keyboard { c, _ ->
+            c.showSmartPreview(
+                chips = listOf(
+                    com.fernandogodinho.teclado.ime.SmartChip("1.250,50 × 3 = 3.751,5", com.fernandogodinho.teclado.ime.SmartKind.CALCULATOR, "calc") {},
+                    com.fernandogodinho.teclado.ime.SmartChip("10 km = 6,2137 mi", com.fernandogodinho.teclado.ime.SmartKind.CONVERSION, "conv") {},
+                ),
+            )
+        }
+        shot("keyboard_smart_chips")
+    }
+
+    @Test
+    fun toolPreview() {
+        keyboard { c, _ ->
+            c.showSmartPreview(
+                result = com.fernandogodinho.teclado.ime.ToolResult(
+                    tool = com.fernandogodinho.teclado.engine.WritingTool.FORMAL,
+                    original = "oi pessoal amanhã não vai ter aula por causa da chuva",
+                    output = "Prezados, informamos que amanhã não haverá aula devido à chuva.",
+                    replaceSelection = false, beforeLen = 0, afterLen = 0,
+                ),
+            )
+        }
+        shot("keyboard_tool_preview")
+    }
+
+    private fun themed(theme: com.fernandogodinho.teclado.ime.ui.KeyboardThemeId, name: String) {
+        val app = RuntimeEnvironment.getApplication() as TecladoApp
+        app.settings.setKeyboardTheme(theme)
+        Thread.sleep(300)
+        keyboard { c, _ -> c.showPreview(null, listOf(Suggestion("voce", verbatim = true), Suggestion("você", autoCorrect = true), Suggestion("vocês"))) }
+        shot(name)
+        app.settings.setKeyboardTheme(com.fernandogodinho.teclado.ime.ui.KeyboardThemeId.CLASSIC)
+        Thread.sleep(300)
+    }
+
+    @Test fun themeGraphite() = themed(com.fernandogodinho.teclado.ime.ui.KeyboardThemeId.GRAPHITE, "theme_graphite")
+    @Test fun themeMidnight() = themed(com.fernandogodinho.teclado.ime.ui.KeyboardThemeId.MIDNIGHT, "theme_midnight")
+    @Test fun themeSage() = themed(com.fernandogodinho.teclado.ime.ui.KeyboardThemeId.SAGE, "theme_sage")
+    @Test fun themeSand() = themed(com.fernandogodinho.teclado.ime.ui.KeyboardThemeId.SAND, "theme_sand")
+    @Test fun themeLavender() = themed(com.fernandogodinho.teclado.ime.ui.KeyboardThemeId.LAVENDER, "theme_lavender")
+    @Test fun themeHighContrast() = themed(com.fernandogodinho.teclado.ime.ui.KeyboardThemeId.HIGH_CONTRAST, "theme_high_contrast")
+
+    @Test
+    fun keyboardSettingsLight() {
+        compose.setContent { TecladoTheme { KeyboardSettingsScreen(onBack = {}) } }
+        shot("app_keyboard_settings")
+    }
+
+    @Test
+    fun tvScreen() {
+        compose.setContent { TecladoTheme { com.fernandogodinho.teclado.ui.screens.TvScreen(onBack = {}) } }
+        shot("app_tv")
+    }
+
+    @Test
+    fun supportScreen() {
+        compose.setContent { TecladoTheme { com.fernandogodinho.teclado.ui.screens.SupportScreen(onBack = {}) } }
+        shot("app_support")
+    }
+
+    @Test
     fun oneHanded() {
         val app = RuntimeEnvironment.getApplication() as TecladoApp
         app.settings.setOneHanded(com.fernandogodinho.teclado.core.OneHandedMode.RIGHT)

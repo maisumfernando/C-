@@ -3,6 +3,14 @@ package com.fernandogodinho.teclado.ui.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import com.fernandogodinho.teclado.ime.ui.KeyboardThemeId
+import com.fernandogodinho.teclado.ime.ui.KeyboardPalette
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -80,7 +88,7 @@ import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 @Composable
-private fun SettingsPage(title: String, onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+internal fun SettingsPage(title: String, onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     Scaffold(topBar = { AppTopBar(title, onBack) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
         Column(
             Modifier
@@ -128,12 +136,6 @@ fun DictationSettingsScreen(onBack: () -> Unit) {
                 "Ao concluir, o texto revisado entra direto no campo. Desligue para revisar antes de inserir.",
                 s.autoInsert,
             ) { repo.setAutoInsert(it) }
-            GroupDivider()
-            SwitchRow(
-                "Segurar o espaço para falar",
-                "Segure a barra de espaço, fale e solte: o texto entra na hora, sem abrir painel. Para trocar de teclado, segure o botão de emoji.",
-                s.holdSpaceToDictate,
-            ) { repo.setHoldSpaceToDictate(it) }
             GroupDivider()
             SwitchRow(
                 "Adaptar o tom ao aplicativo",
@@ -220,7 +222,7 @@ fun KeyboardSettingsScreen(onBack: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconBadge(Icons.Outlined.Palette)
                     Spacer(Modifier.width(14.dp))
-                    Text("Tema", style = MaterialTheme.typography.bodyLarge)
+                    Text("Claro ou escuro", style = MaterialTheme.typography.bodyLarge)
                 }
                 Gap(12)
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -232,6 +234,22 @@ fun KeyboardSettingsScreen(onBack: () -> Unit) {
                         ) { Text(mode.label) }
                     }
                 }
+            }
+            GroupDivider()
+            Column(Modifier.padding(16.dp)) {
+                Text("Tema do teclado", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "O Clássico acompanha o claro/escuro acima; os outros têm cores próprias. Todos foram conferidos para manter o texto legível.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Gap(12)
+                val dark = when (s.theme) {
+                    ThemeMode.SYSTEM -> androidx.compose.foundation.isSystemInDarkTheme()
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                }
+                KeyboardThemePicker(selected = s.keyboardTheme, dark = dark) { repo.setKeyboardTheme(it) }
             }
             GroupDivider()
             Column(Modifier.padding(16.dp)) {
@@ -254,6 +272,12 @@ fun KeyboardSettingsScreen(onBack: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            GroupDivider()
+            SwitchRow(
+                "Barra de espaço como trackpad",
+                "Toque e segure o espaço: o teclado inteiro vira um trackpad para mover o cursor pelo texto. Deslizar o espaço para os lados também move o cursor. Para trocar de teclado, segure o botão de emoji.",
+                s.spaceTrackpad,
+            ) { repo.setSpaceTrackpad(it) }
             GroupDivider()
             SwitchRow("Fileira de números", "Mostra os números acima das letras", s.numberRow) { repo.setNumberRow(it) }
             GroupDivider()
@@ -419,6 +443,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 Text(
                     "O teclado processa voz e texto inteiramente no seu aparelho. O áudio é mantido apenas na memória durante o ditado e descartado em seguida. " +
                         "A única conexão com a internet é o download dos modelos, feito diretamente do Hugging Face e verificado por SHA-256. " +
+                        "Se você usar o Teclado na TV, só o texto escrito na tela “Digitar na TV” vai para a sua TV, direto pela rede Wi-Fi da casa. " +
                         "Não há contas, anúncios, telemetria ou envio de dados.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -480,5 +505,67 @@ fun AboutScreen(onBack: () -> Unit) {
             },
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) { Text("Código-fonte no GitHub") }
+    }
+}
+
+
+/** Grid of small keyboard previews, one per theme. */
+@Composable
+fun KeyboardThemePicker(selected: KeyboardThemeId, dark: Boolean, onSelect: (KeyboardThemeId) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        KeyboardThemeId.entries.forEach { id ->
+            val c = KeyboardPalette.of(id, dark)
+            val isSelected = id == selected
+            Column(
+                Modifier
+                    .width(96.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable { onSelect(id) },
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .border(
+                            if (isSelected) 2.5.dp else 1.dp,
+                            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                            RoundedCornerShape(14.dp),
+                        )
+                        .background(c.background)
+                        .padding(7.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        Box(Modifier.size(14.dp).clip(CircleShape).background(c.mic))
+                    }
+                    repeat(2) { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                            repeat(5) { i ->
+                                Box(
+                                    Modifier.weight(1f).height(13.dp).clip(RoundedCornerShape(3.dp)).background(c.key),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    if (row == 0 && i < 3) {
+                                        Text("abc"[i].toString(), color = c.text, fontSize = 8.sp, lineHeight = 9.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Box(Modifier.weight(1f).height(13.dp).clip(RoundedCornerShape(3.dp)).background(c.functionKey))
+                        Box(Modifier.weight(3f).height(13.dp).clip(RoundedCornerShape(3.dp)).background(c.key))
+                        Box(Modifier.weight(1f).height(13.dp).clip(RoundedCornerShape(3.dp)).background(c.accent))
+                    }
+                }
+                Gap(6)
+                Text(
+                    id.label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
     }
 }

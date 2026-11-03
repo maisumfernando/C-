@@ -12,6 +12,13 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Optional "type on the TV": stays connected to a paired TV on the local Wi-Fi.
+         CHANGE_WIFI_MULTICAST_STATE is the prerequisite Android requires for this service type. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- "/timer 10 min": lets the clock app start a timer after the user confirms. -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
@@ -61,6 +68,45 @@
                 android:name="android.view.im"
                 android:resource="@xml/method" />
         </service>
+
+        <activity
+            android:name=".ui.ComposerActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity="com.fernandogodinho.teclado.composer"
+            android:windowSoftInputMode="stateAlwaysVisible|adjustResize" />
+
+        <activity
+            android:name=".tv.TvKeyboardActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:taskAffinity="com.fernandogodinho.teclado.tv"
+            android:windowSoftInputMode="stateAlwaysVisible|adjustResize" />
+
+        <service
+            android:name=".tv.TvLinkService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+        <service
+            android:name=".tv.TvTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_tv"
+            android:label="Digitar na TV"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".tv.TvBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"

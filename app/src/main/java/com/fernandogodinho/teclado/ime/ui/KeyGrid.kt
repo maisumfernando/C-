@@ -4,6 +4,7 @@ import android.view.HapticFeedbackConstants
 import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +25,6 @@ import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -58,7 +58,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fernandogodinho.teclado.core.AppSettings
-import com.fernandogodinho.teclado.dictation.DictationPhase
 import com.fernandogodinho.teclado.ime.EnterKind
 import com.fernandogodinho.teclado.ime.Feedback
 import com.fernandogodinho.teclado.ime.KeyboardController
@@ -136,13 +135,16 @@ class KeyTouchTracker(
     var preview by mutableStateOf<KeyGeo?>(null)
     var popup by mutableStateOf<AlternatesPopup?>(null)
 
-    private enum class Mode { NORMAL, POPUP, CURSOR, DICTATE, DELETE_SWIPE }
+    private enum class Mode { NORMAL, POPUP, CURSOR, TRACKPAD, DELETE_SWIPE }
 
     private inner class Track(var geo: KeyGeo, val down: Offset) {
         var mode = Mode.NORMAL
         var consumed = false
         var timer: Job? = null
         var cursorX = down.x
+        var cursorY = down.y
+        /** Latest finger position (the trackpad starts from where the finger is now). */
+        var last = down
         var wordsDeleted = 0
         fun cancel() {
             timer?.cancel()
@@ -173,8 +175,7 @@ class KeyTouchTracker(
     }
 
     fun reset() {
-        // A gesture interrupted by the system still counts as letting go of the space bar.
-        if (tracks.values.any { it.mode == Mode.DICTATE }) controller.finishDictation()
+        if (tracks.values.any { it.mode == Mode.TRACKPAD }) controller.onTrackpad(false)
         tracks.values.forEach { it.cancel() }
         tracks.clear()
         pressed.clear()
@@ -183,6 +184,12 @@ class KeyTouchTracker(
     }
 
     private fun onDown(id: PointerId, pos: Offset) {
+        // Trackpad active: a second finger toggles text selection instead of pressing a key.
+        if (tracks.values.any { it.mode == Mode.TRACKPAD }) {
+            controller.toggleTrackpadSelection()
+            feedback.longPress(view, settings().haptics)
+            return
+        }
         // Rollover: a new finger commits keys still held by other fingers.
         for (t in tracks.values) {
             if (t.mode == Mode.NORMAL && !t.consumed && t.geo.key.isCharacter) {
@@ -229,17 +236,21 @@ class KeyTouchTracker(
         val key = track.geo.key
         val hasAlternates = key.alternates.isNotEmpty()
         if (!hasAlternates && key.action != KeyAction.Space && key.action != KeyAction.Emoji) return
-        val spaceDictation = key.action == KeyAction.Space && settings().holdSpaceToDictate
+        val spaceTrackpad = key.action == KeyAction.Space && settings().spaceTrackpad
         track.timer = scope.launch {
-            // Holding space to talk needs a slightly longer hold so normal typing never triggers it.
-            delay(settings().longPressDelayMs.toLong() + if (spaceDictation) 120 else 0)
+            delay(settings().longPressDelayMs.toLong())
             if (track.mode != Mode.NORMAL || track.consumed) return@launch
             when {
-                spaceDictation -> {
+                spaceTrackpad -> {
+                    // Like the iPhone: the whole keyboard becomes a trackpad for the cursor.
                     track.consumed = true
-                    track.mode = Mode.DICTATE
+                    track.mode = Mode.TRACKPAD
+                    track.cursorX = track.last.x
+                    track.cursorY = track.last.y
+                    preview = null
+                    pressed.clear()
                     feedback.longPress(view, settings().haptics)
-                    controller.startDictation(quick = true)
+                    controller.onTrackpad(true)
                 }
                 key.action == KeyAction.Space || key.action == KeyAction.Emoji -> {
                     track.consumed = true
@@ -269,6 +280,7 @@ class KeyTouchTracker(
 
     private fun onMove(id: PointerId, pos: Offset) {
         val track = tracks[id] ?: return
+        track.last = pos
         when (track.mode) {
             Mode.POPUP -> popup?.let { p ->
                 val i = p.indexAt(pos.x)
@@ -286,7 +298,23 @@ class KeyTouchTracker(
                     if (settings().haptics) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                 }
             }
-            Mode.DICTATE -> Unit
+            Mode.TRACKPAD -> {
+                // Horizontal: one character per step. Vertical: one line per ~half key row.
+                val stepX = 9 * density
+                val stepY = rowHeight * 0.55f
+                val dx = ((pos.x - track.cursorX) / stepX).toInt()
+                if (dx != 0) {
+                    controller.moveCursor(dx)
+                    track.cursorX += dx * stepX
+                    if (settings().haptics) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                }
+                val dy = ((pos.y - track.cursorY) / stepY).toInt()
+                if (dy != 0) {
+                    controller.moveCursorLines(dy)
+                    track.cursorY += dy * stepY
+                    if (settings().haptics && controller.multiLineField) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                }
+            }
             Mode.DELETE_SWIPE -> deleteSwipe(track, pos)
             Mode.NORMAL -> {
                 val key = track.geo.key
@@ -327,7 +355,7 @@ class KeyTouchTracker(
                 popup = null
             }
             Mode.CURSOR, Mode.DELETE_SWIPE -> Unit
-            Mode.DICTATE -> controller.finishDictation()
+            Mode.TRACKPAD -> controller.onTrackpad(false)
             Mode.NORMAL -> if (!track.consumed) controller.onKey(track.geo.key)
         }
     }
@@ -380,8 +408,9 @@ fun KeyGrid(
                 .fillMaxSize()
                 .pointerInput(geometry) { with(tracker) { track() } },
         ) {
+            val trackpad = controller.trackpadActive
             for (geo in geometry) {
-                KeyView(geo, controller, pressed = geo.key in tracker.pressed, colors = colors)
+                KeyView(geo, controller, pressed = geo.key in tracker.pressed, colors = colors, blank = trackpad)
             }
             tracker.preview?.let { PreviewBubble(it, controller, colors) }
             tracker.popup?.let { AlternatesView(it, controller, colors) }
@@ -390,22 +419,16 @@ fun KeyGrid(
 }
 
 @Composable
-private fun quickListening(controller: KeyboardController): Boolean {
-    val phase = controller.dictation?.state?.collectAsState()?.value?.phase ?: return false
-    return phase == DictationPhase.STARTING || phase == DictationPhase.LISTENING
-}
-
-@Composable
-private fun KeyView(geo: KeyGeo, controller: KeyboardController, pressed: Boolean, colors: KeyboardColors) {
+private fun KeyView(geo: KeyGeo, controller: KeyboardController, pressed: Boolean, colors: KeyboardColors, blank: Boolean = false) {
     val density = LocalDensity.current
     val key = geo.key
     val shape = RoundedCornerShape(9.dp)
-    val bg = when (key.style) {
-        KeyStyle.ENTER -> if (pressed) colors.accentPressed else colors.accent
-        KeyStyle.FUNCTION -> if (pressed) colors.functionKeyPressed else colors.functionKey
-        else -> if (pressed) colors.keyPressed else colors.key
+    val bg = when {
+        // Trackpad: every key turns into the same blank surface, without labels.
+        blank -> colors.functionKey
+        else -> keyBackground(key.style, pressed, colors)
     }
-    val shadowColor = colors.keyShadow
+    val shadowColor = if (blank) Color.Transparent else colors.keyShadow
     val w = with(density) { geo.rect.width.toDp() }
     val h = with(density) { geo.rect.height.toDp() }
     Box(
@@ -419,22 +442,31 @@ private fun KeyView(geo: KeyGeo, controller: KeyboardController, pressed: Boolea
             },
         contentAlignment = Alignment.Center,
     ) {
+        if (!blank) KeyContent(key, controller, colors)
+    }
+}
+
+private fun keyBackground(style: KeyStyle, pressed: Boolean, colors: KeyboardColors): Color =
+    when (style) {
+        KeyStyle.ENTER -> if (pressed) colors.accentPressed else colors.accent
+        KeyStyle.FUNCTION -> if (pressed) colors.functionKeyPressed else colors.functionKey
+        else -> if (pressed) colors.keyPressed else colors.key
+    }
+
+@Composable
+private fun BoxScope.KeyContent(key: KeySpec, controller: KeyboardController, colors: KeyboardColors) {
+    run {
         val content = if (key.style == KeyStyle.ENTER) colors.onAccent else colors.text
         when (key.action) {
             KeyAction.Backspace -> Icon(Icons.AutoMirrored.Outlined.Backspace, "Apagar", tint = content, modifier = Modifier.size(22.dp))
             KeyAction.Shift -> ShiftIcon(controller.shift, content)
             KeyAction.Enter -> Icon(enterIcon(controller.enterKind), "Enter", tint = content, modifier = Modifier.size(22.dp))
             KeyAction.Emoji -> Icon(Icons.Outlined.EmojiEmotions, "Emojis", tint = content, modifier = Modifier.size(22.dp))
-            KeyAction.Space -> if (controller.quickDictation && controller.quickHolding && quickListening(controller)) {
-                // Only while the finger is down: once released the toolbar shows the progress.
-                Text("● Ouvindo… solte para inserir", color = colors.recording, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-            } else {
-                Text(
-                    if (key.label == " ") "Português" else key.label,
-                    color = colors.textMuted,
-                    fontSize = 13.sp,
-                )
-            }
+            KeyAction.Space -> Text(
+                if (key.label == " ") "Português" else key.label,
+                color = colors.textMuted,
+                fontSize = 13.sp,
+            )
             else -> {
                 val label = controller.displayLabel(key)
                 val isLetter = key.isCharacter && label.length == 1

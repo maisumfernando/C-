@@ -30,6 +30,9 @@ import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.Tv
+import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
@@ -315,7 +318,13 @@ fun HomeScreen(
                 trailing = settings.vocabulary.size.takeIf { it > 0 }?.toString(),
             ) { navigate(MainActivity.ROUTE_VOCABULARY) }
             GroupDivider()
+            NavRow(Icons.Outlined.BookmarkBorder, "Respostas e atalhos", subtitle = "Assinatura, endereço e respostas com /atalho") { navigate(MainActivity.ROUTE_SNIPPETS) }
+            GroupDivider()
+            NavRow(Icons.Outlined.Tv, "Teclado na TV", subtitle = "Digite e dite na TV pelo celular") { navigate(MainActivity.ROUTE_TV) }
+            GroupDivider()
             NavRow(Icons.Outlined.Info, "Privacidade e sobre") { navigate(MainActivity.ROUTE_ABOUT) }
+            GroupDivider()
+            NavRow(Icons.Outlined.FavoriteBorder, "Apoie o projeto", subtitle = "Sobre o Fernando Godinho e a chave Pix") { navigate(MainActivity.ROUTE_SUPPORT) }
         }
 
         SectionTitle("Como funciona")

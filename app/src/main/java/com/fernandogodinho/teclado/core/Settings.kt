@@ -1,6 +1,7 @@
 package com.fernandogodinho.teclado.core
 
 import android.content.Context
+import com.fernandogodinho.teclado.ime.ui.KeyboardThemeId
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
@@ -13,6 +14,7 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -67,6 +69,7 @@ data class AppSettings(
     val pauseToTranscribe: Boolean = true,
     // Keyboard
     val theme: ThemeMode = ThemeMode.SYSTEM,
+    val keyboardTheme: KeyboardThemeId = KeyboardThemeId.CLASSIC,
     val numberRow: Boolean = false,
     val haptics: Boolean = true,
     val sound: Boolean = false,
@@ -81,9 +84,12 @@ data class AppSettings(
     val clipboardHistory: Boolean = true,
     val smartPaste: Boolean = true,
     val learnWords: Boolean = true,
-    val holdSpaceToDictate: Boolean = true,
+    /** Touch and hold the space bar: the whole keyboard becomes a trackpad for the cursor. */
+    val spaceTrackpad: Boolean = true,
     val adaptToneToApp: Boolean = false,
     val oneHanded: OneHandedMode = OneHandedMode.OFF,
+    // TV
+    val tvListen: Boolean = false,
     // Updates
     val checkUpdates: Boolean = true,
     // Onboarding
@@ -108,6 +114,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val vocabulary = stringSetPreferencesKey("vocabulary")
         val pauseToTranscribe = booleanPreferencesKey("pause_to_transcribe")
         val theme = stringPreferencesKey("theme")
+        val keyboardTheme = stringPreferencesKey("keyboard_theme")
         val numberRow = booleanPreferencesKey("number_row")
         val haptics = booleanPreferencesKey("haptics")
         val sound = booleanPreferencesKey("sound")
@@ -123,10 +130,11 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val clipboard = booleanPreferencesKey("clipboard_history")
         val smartPaste = booleanPreferencesKey("smart_paste")
         val learnWords = booleanPreferencesKey("learn_words")
-        val holdSpace = booleanPreferencesKey("hold_space_dictate")
+        val spaceTrackpad = booleanPreferencesKey("space_trackpad")
         val adaptTone = booleanPreferencesKey("adapt_tone_to_app")
         val oneHanded = stringPreferencesKey("one_handed")
         val checkUpdates = booleanPreferencesKey("check_updates")
+        val tvListen = booleanPreferencesKey("tv_listen")
         val onboarding = booleanPreferencesKey("onboarding_done")
     }
 
@@ -151,6 +159,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
     fun setKeepLoadedMinutes(v: Int) = update { it[K.keepLoaded] = v }
     fun setPauseToTranscribe(v: Boolean) = update { it[K.pauseToTranscribe] = v }
     fun setTheme(v: ThemeMode) = update { it[K.theme] = v.name }
+    fun setKeyboardTheme(v: KeyboardThemeId) = update { it[K.keyboardTheme] = v.name }
     fun setNumberRow(v: Boolean) = update { it[K.numberRow] = v }
     fun setHaptics(v: Boolean) = update { it[K.haptics] = v }
     fun setSound(v: Boolean) = update { it[K.sound] = v }
@@ -165,10 +174,14 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
     fun setOnboardingDone(v: Boolean) = update { it[K.onboarding] = v }
     fun setSmartPaste(v: Boolean) = update { it[K.smartPaste] = v }
     fun setLearnWords(v: Boolean) = update { it[K.learnWords] = v }
-    fun setHoldSpaceToDictate(v: Boolean) = update { it[K.holdSpace] = v }
+    fun setSpaceTrackpad(v: Boolean) = update { it[K.spaceTrackpad] = v }
     fun setAdaptToneToApp(v: Boolean) = update { it[K.adaptTone] = v }
     fun setOneHanded(v: OneHandedMode) = update { it[K.oneHanded] = v.name }
     fun setCheckUpdates(v: Boolean) = update { it[K.checkUpdates] = v }
+    fun setTvListen(v: Boolean) = update { it[K.tvListen] = v }
+
+    /** Reads the stored settings (the [settings] flow starts with defaults until the file is read). */
+    suspend fun load(): AppSettings = context.dataStore.data.first().toSettings()
 
     fun addVocabulary(term: String) {
         val clean = term.trim()
@@ -191,6 +204,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             vocabulary = this[K.vocabulary] ?: d.vocabulary,
             pauseToTranscribe = this[K.pauseToTranscribe] ?: d.pauseToTranscribe,
             theme = enumOr(this[K.theme], d.theme),
+            keyboardTheme = enumOr(this[K.keyboardTheme], d.keyboardTheme),
             numberRow = this[K.numberRow] ?: d.numberRow,
             haptics = this[K.haptics] ?: d.haptics,
             sound = this[K.sound] ?: d.sound,
@@ -204,10 +218,11 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             clipboardHistory = this[K.clipboard] ?: d.clipboardHistory,
             smartPaste = this[K.smartPaste] ?: d.smartPaste,
             learnWords = this[K.learnWords] ?: d.learnWords,
-            holdSpaceToDictate = this[K.holdSpace] ?: d.holdSpaceToDictate,
+            spaceTrackpad = this[K.spaceTrackpad] ?: d.spaceTrackpad,
             adaptToneToApp = this[K.adaptTone] ?: d.adaptToneToApp,
             oneHanded = enumOr(this[K.oneHanded], d.oneHanded),
             checkUpdates = this[K.checkUpdates] ?: d.checkUpdates,
+            tvListen = this[K.tvListen] ?: d.tvListen,
             onboardingDone = this[K.onboarding] ?: d.onboardingDone,
         )
     }

@@ -28,6 +28,18 @@ import androidx.compose.material.icons.outlined.ShortText
 import androidx.compose.material.icons.outlined.SentimentSatisfied
 import androidx.compose.material.icons.outlined.Spellcheck
 import androidx.compose.material.icons.outlined.Translate
+import androidx.compose.material.icons.outlined.Abc
+import androidx.compose.material.icons.outlined.Rule
+import androidx.compose.material.icons.outlined.Help
+import androidx.compose.material.icons.outlined.QuestionAnswer
+import androidx.compose.material.icons.automirrored.outlined.Reply
+import androidx.compose.material.icons.outlined.Summarize
+import androidx.compose.material.icons.outlined.OpenInFull
+import androidx.compose.material.icons.outlined.SupportAgent
+import androidx.compose.material.icons.outlined.RecordVoiceOver
+import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,14 +59,35 @@ import com.fernandogodinho.teclado.ime.Panel
 private val toolIcons: Map<WritingTool, ImageVector> = mapOf(
     WritingTool.REVISE to Icons.Outlined.AutoAwesome,
     WritingTool.FIX to Icons.Outlined.Spellcheck,
+    WritingTool.CLEARER to Icons.Outlined.Lightbulb,
+    WritingTool.SIMPLER to Icons.Outlined.ShortText,
     WritingTool.FORMAL to Icons.Outlined.BusinessCenter,
     WritingTool.FRIENDLY to Icons.Outlined.SentimentSatisfied,
+    WritingTool.CASUAL to Icons.Outlined.EmojiEmotions,
+    WritingTool.ASSERTIVE to Icons.Outlined.RecordVoiceOver,
+    WritingTool.PROFESSIONAL to Icons.Outlined.SupportAgent,
     WritingTool.SHORTER to Icons.Outlined.ShortText,
+    WritingTool.EXPAND to Icons.Outlined.OpenInFull,
     WritingTool.BULLETS to Icons.AutoMirrored.Outlined.FormatListBulleted,
     WritingTool.EMAIL to Icons.Outlined.Email,
+    WritingTool.SUMMARY to Icons.Outlined.Summarize,
+    WritingTool.REPLY to Icons.AutoMirrored.Outlined.Reply,
+    WritingTool.PENDING to Icons.Outlined.QuestionAnswer,
+    WritingTool.AMBIGUITY to Icons.Outlined.Help,
+    WritingTool.COHERENCE to Icons.Outlined.Rule,
+    WritingTool.SYNONYMS to Icons.Outlined.Abc,
     WritingTool.TO_ENGLISH to Icons.Outlined.Translate,
     WritingTool.TO_SPANISH to Icons.Outlined.Translate,
     WritingTool.TO_PORTUGUESE to Icons.Outlined.Translate,
+)
+
+/** Tools grouped the way people think about them. */
+private val toolGroups: List<Pair<String, List<WritingTool>>> = listOf(
+    "Corrigir e reescrever" to listOf(WritingTool.REVISE, WritingTool.FIX, WritingTool.CLEARER, WritingTool.SIMPLER, WritingTool.SHORTER, WritingTool.EXPAND, WritingTool.BULLETS, WritingTool.EMAIL),
+    "Tom" to listOf(WritingTool.FORMAL, WritingTool.FRIENDLY, WritingTool.CASUAL, WritingTool.ASSERTIVE, WritingTool.PROFESSIONAL),
+    "Responder (use a mensagem copiada)" to listOf(WritingTool.REPLY, WritingTool.PENDING),
+    "Analisar" to listOf(WritingTool.SUMMARY, WritingTool.AMBIGUITY, WritingTool.COHERENCE, WritingTool.SYNONYMS),
+    "Traduzir" to listOf(WritingTool.TO_ENGLISH, WritingTool.TO_SPANISH, WritingTool.TO_PORTUGUESE),
 )
 
 /** "Ferramentas de IA": rewrite, fix, change tone, summarise or translate — all on the phone. */
@@ -99,7 +132,18 @@ fun WritingToolsPanel(controller: KeyboardController, modifier: Modifier = Modif
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(WritingTool.entries.filter { it != WritingTool.CUSTOM }) { tool ->
+            toolGroups.forEach { (title, tools) ->
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(title.uppercase(), color = colors.textMuted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp, modifier = Modifier.padding(start = 4.dp, top = 6.dp))
+                }
+                toolItems(tools, colors, controller)
+            }
+        }
+    }
+}
+
+private fun androidx.compose.foundation.lazy.grid.LazyGridScope.toolItems(tools: List<WritingTool>, colors: KeyboardColors, controller: KeyboardController) {
+            items(tools) { tool ->
                 Row(
                     Modifier
                         .height(42.dp)
@@ -116,6 +160,4 @@ fun WritingToolsPanel(controller: KeyboardController, modifier: Modifier = Modif
                     Text(tool.label, color = colors.text, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-        }
-    }
 }

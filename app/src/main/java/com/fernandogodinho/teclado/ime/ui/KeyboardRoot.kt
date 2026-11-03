@@ -6,6 +6,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -30,6 +32,8 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.OpenInFull
 import androidx.compose.material.icons.outlined.PanTool
 import androidx.compose.material.icons.outlined.Close
@@ -105,7 +109,7 @@ fun KeyboardRoot(service: TecladoIme, controller: KeyboardController) {
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
-    val colors = if (dark) KeyboardPalette.dark else KeyboardPalette.light
+    val colors = KeyboardPalette.of(settings.keyboardTheme, dark)
     val feedback = remember { Feedback(service) }
 
     val layout = remember(controller.layoutMode, controller.fieldKind, settings.numberRow) {
@@ -143,6 +147,8 @@ fun KeyboardRoot(service: TecladoIme, controller: KeyboardController) {
                             Panel.EMOJI -> EmojiPanel(controller)
                             Panel.CLIPBOARD -> ClipboardPanel(controller)
                             Panel.TOOLS -> WritingToolsPanel(controller)
+                            Panel.SNIPPETS -> SnippetsPanel(controller)
+                            Panel.PREVIEW -> ToolPreviewPanel(controller)
                             else -> OneHandedFrame(settings.oneHanded, controller) {
                                 KeyGrid(
                                     layout = layout,
@@ -177,6 +183,7 @@ private fun Toolbar(controller: KeyboardController, haptics: Boolean) {
                 session != null -> 6
                 controller.revising -> 0
                 controller.notice != null -> 1
+                controller.smartChips.isNotEmpty() -> 8
                 controller.suggestions.isNotEmpty() -> 2
                 controller.lastDictation != null -> 3
                 controller.lastRevision != null -> 4
@@ -198,6 +205,7 @@ private fun Toolbar(controller: KeyboardController, haptics: Boolean) {
                         DictationToolbarContent(it, quick = controller.panel != Panel.DICTATION, onClose = { controller.cancelDictation() })
                     }
                     7 -> PasteChipRow(controller)
+                    8 -> SmartChipRow(controller.smartChips)
                     else -> ToolbarActions(controller)
                 }
             }
@@ -208,10 +216,13 @@ private fun Toolbar(controller: KeyboardController, haptics: Boolean) {
 
 @Composable
 private fun ToolbarActions(controller: KeyboardController) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    // Scrolls sideways on narrow phones instead of squeezing the icons.
+    Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
         ToolbarIcon(Icons.Outlined.Settings, "Configurações") { controller.openApp() }
         ToolbarIcon(Icons.Outlined.ContentPaste, "Área de transferência") { controller.showPanel(Panel.CLIPBOARD) }
         ToolbarIcon(Icons.Outlined.AutoAwesome, "Ferramentas de IA") { controller.openWritingTools() }
+        ToolbarIcon(Icons.Outlined.BookmarkBorder, "Respostas salvas") { controller.showPanel(Panel.SNIPPETS) }
+        ToolbarIcon(Icons.Outlined.EditNote, "Escrever com calma") { controller.openComposer() }
         ToolbarIcon(Icons.Outlined.PanTool, "Modo uma mão") { controller.toggleOneHanded() }
         ToolbarIcon(Icons.Outlined.KeyboardHide, "Fechar teclado") { controller.hideKeyboard() }
     }
@@ -355,7 +366,7 @@ private fun MicButton(controller: KeyboardController, haptics: Boolean) {
             .padding(start = 4.dp)
             .size(38.dp)
             .clip(CircleShape)
-            .background(if (listening) colors.recording.copy(alpha = 0.14f) else if (busy) colors.chip else colors.accent)
+            .background(if (listening) colors.recording.copy(alpha = 0.14f) else if (busy) colors.chip else colors.mic)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
@@ -386,7 +397,7 @@ private fun MicButton(controller: KeyboardController, haptics: Boolean) {
         when {
             listening -> Icon(Icons.Filled.Stop, "Concluir ditado", tint = colors.recording, modifier = Modifier.size(20.dp))
             busy -> CircularProgressIndicator(color = colors.accent, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-            else -> Icon(Icons.Filled.Mic, "Ditar", tint = colors.onAccent, modifier = Modifier.size(21.dp))
+            else -> Icon(Icons.Filled.Mic, "Ditar", tint = colors.onMic, modifier = Modifier.size(21.dp))
         }
     }
 }

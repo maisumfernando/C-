@@ -18,7 +18,7 @@ import com.fernandogodinho.teclado.core.ThemeMode
 private val Ink = Color(0xFF3D5CEB)
 private val InkDark = Color(0xFF8FA4FF)
 
-private val Light = lightColorScheme(
+internal val Light = lightColorScheme(
     primary = Ink,
     onPrimary = Color.White,
     primaryContainer = Color(0xFFE4E8FD),
@@ -27,7 +27,7 @@ private val Light = lightColorScheme(
     onSecondary = Color.White,
     secondaryContainer = Color(0xFFEDECE7),
     onSecondaryContainer = Color(0xFF2A2A27),
-    tertiary = Color(0xFF2E8B57),
+    tertiary = Color(0xFF1F7A4A),
     background = Color(0xFFF8F7F4),
     onBackground = Color(0xFF1B1B19),
     surface = Color(0xFFF8F7F4),
@@ -44,7 +44,7 @@ private val Light = lightColorScheme(
     error = Color(0xFFD1373D),
 )
 
-private val Dark = darkColorScheme(
+internal val Dark = darkColorScheme(
     primary = InkDark,
     onPrimary = Color(0xFF0E1433),
     primaryContainer = Color(0xFF26315F),

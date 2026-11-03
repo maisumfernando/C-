@@ -4,10 +4,13 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import com.fernandogodinho.teclado.core.ComposerHandoff
 import com.fernandogodinho.teclado.core.SettingsRepository
+import com.fernandogodinho.teclado.core.SnippetStore
 import com.fernandogodinho.teclado.core.VocabularyStore
 import com.fernandogodinho.teclado.engine.BenchmarkRunner
 import com.fernandogodinho.teclado.engine.EngineManager
+import com.fernandogodinho.teclado.tv.TvManager
 import com.fernandogodinho.teclado.models.ModelRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +37,12 @@ class TecladoApp : Application() {
         private set
     /** On-device speed test of the installed models (created on first use). */
     val benchmark: BenchmarkRunner by lazy { BenchmarkRunner(this, engines, models, appScope) }
+    /** Typing on TVs over the local network (created on first use). */
+    val tv: TvManager by lazy { TvManager(this, appScope) }
+    /** Saved replies and text shortcuts (created on first use). */
+    val snippets: SnippetStore by lazy { SnippetStore(this) }
+    /** Text travelling from the composition editor back to the original field (memory only). */
+    val composer = ComposerHandoff()
 
     override fun onCreate() {
         super.onCreate()

@@ -39,7 +39,7 @@ import java.text.BreakIterator
 
 enum class ShiftState { OFF, ON, LOCKED }
 
-enum class Panel { KEYBOARD, EMOJI, CLIPBOARD, DICTATION, TOOLS }
+enum class Panel { KEYBOARD, EMOJI, CLIPBOARD, DICTATION, TOOLS, SNIPPETS, PREVIEW }
 
 data class PasteChip(val label: String, val text: String)
 
@@ -47,11 +47,29 @@ enum class EnterKind { NEWLINE, GO, SEARCH, SEND, NEXT, DONE, PREVIOUS }
 
 data class Suggestion(val text: String, val verbatim: Boolean = false, val autoCorrect: Boolean = false)
 
+enum class SmartKind { CALCULATOR, CONVERSION, SNIPPET, REMINDER, EMAIL_DOMAIN }
+
+/** A one-tap action offered above the keys: a calculation, a conversion, a saved reply… */
+data class SmartChip(val label: String, val kind: SmartKind, val key: String, val action: () -> Unit) {
+    override fun equals(other: Any?) = other is SmartChip && other.key == key && other.label == label
+    override fun hashCode() = key.hashCode() * 31 + label.hashCode()
+}
+
 /** Text inserted by the last dictation, so the user can swap between polished and original. */
 /** A text revision applied by the AI, kept so it can be undone. */
 data class Revision(val original: String, val revised: String)
 
 data class InsertedDictation(val polished: String, val raw: String, val inserted: String, val showingOriginal: Boolean)
+
+/** The result of an AI tool, shown for review before anything changes in the field. */
+data class ToolResult(
+    val tool: WritingTool,
+    val original: String,
+    val output: String,
+    val replaceSelection: Boolean,
+    val beforeLen: Int,
+    val afterLen: Int,
+)
 
 /**
  * Keyboard state and all editing logic. The Compose UI only renders this state and forwards
@@ -108,6 +126,18 @@ class KeyboardController(
     var lastRevision by mutableStateOf<Revision?>(null)
         private set
     private var revisionJob: Job? = null
+    /** Calculator, conversions, saved replies and other local helpers for the text being typed. */
+    var smartChips by mutableStateOf<List<SmartChip>>(emptyList())
+        private set
+    /** AI tool output waiting for the user's decision (replace, insert, copy or discard). */
+    var toolResult by mutableStateOf<ToolResult?>(null)
+        private set
+    /** True while the trackpad extends a selection (second finger on the keyboard). */
+    var trackpadSelecting by mutableStateOf(false)
+        private set
+    private var sensitiveWarned = mutableSetOf<com.fernandogodinho.teclado.ime.smart.SensitiveData.Kind>()
+    private var pendingSensitiveSnippet: String? = null
+    private var pendingSensitiveAt = 0L
 
     val clipboard = ClipboardHistory(service)
 
@@ -147,7 +177,9 @@ class KeyboardController(
     // Lifecycle
     // ---------------------------------------------------------------------------------------
 
-    fun onStartInput(info: EditorInfo) {
+    fun onStartInput(info: EditorInfo, restarting: Boolean = false) {
+        // Some apps restart the input on every change; keep open panels when it is the same field.
+        val sameField = restarting && editorInfo?.let { it.packageName == info.packageName && it.fieldId == info.fieldId } == true
         editorInfo = info
         val cls = info.inputType and InputType.TYPE_MASK_CLASS
         val variation = info.inputType and InputType.TYPE_MASK_VARIATION
@@ -168,15 +200,21 @@ class KeyboardController(
         privateField = fieldKind == FieldKind.PASSWORD ||
             (info.imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING) != 0
         clipboard.paused = privateField
-        if (panel != Panel.DICTATION) panel = Panel.KEYBOARD
+        if (!sameField) {
+            if (panel != Panel.DICTATION) panel = Panel.KEYBOARD
+            toolResult = null
+        }
         shift = ShiftState.OFF
         lastCorrection = null
         autoSpace = false
         cursorBelief = info.initialSelStart
         if (dictation == null) lastDictation = null
+        sensitiveWarned.clear()
+        pendingSensitiveSnippet = null
         resyncWord()
         updateAutoCaps()
         refreshPasteChip()
+        deliverComposerText(info)
     }
 
     fun onFinishInput() {
@@ -274,6 +312,7 @@ class KeyboardController(
 
     private fun commitRaw(text: String) {
         val ic = ic ?: return
+        checkSensitive(text)
         ic.commitText(text, 1)
         cursorBelief += text.length
         word.clear()
@@ -326,6 +365,7 @@ class KeyboardController(
         if (layoutMode != LayoutMode.LETTERS && layoutMode != LayoutMode.NUMBERS && layoutMode != LayoutMode.PHONE) {
             layoutMode = LayoutMode.LETTERS
         }
+        checkSensitive(ic.getTextBeforeCursor(40, 0)?.toString().orEmpty())
         publishSuggestions()
         updateAutoCaps()
     }
@@ -425,18 +465,69 @@ class KeyboardController(
         lastShiftTapAt = now
     }
 
-    /** Moves the cursor by [chars] characters (space-bar swipe). */
+    /**
+     * Moves the cursor [chars] characters. Never moves past the ends of the text: an arrow key
+     * pressed at the edge would make the app move the focus to another field.
+     */
     fun moveCursor(chars: Int) {
         val ic = ic ?: return
         if (chars == 0) return
+        val room = if (chars < 0) ic.getTextBeforeCursor(-chars, 0)?.length else ic.getTextAfterCursor(chars, 0)?.length
+        val steps = minOf(kotlin.math.abs(chars), room ?: kotlin.math.abs(chars))
+        if (steps == 0) return
         val code = if (chars < 0) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
-        repeat(kotlin.math.abs(chars)) {
-            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code))
-            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
+        repeat(steps) { sendArrow(ic, code) }
+        lastCorrection = null
+        autoSpace = false
+    }
+
+    /** True when the field has several lines, so the trackpad can also move up and down. */
+    val multiLineField: Boolean
+        get() = (editorInfo?.inputType ?: 0) and android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE != 0
+
+    /** Moves the cursor [lines] lines up (negative) or down, only in multi-line fields. */
+    fun moveCursorLines(lines: Int) {
+        val ic = ic ?: return
+        if (lines == 0 || !multiLineField) return
+        repeat(kotlin.math.abs(lines)) {
+            // At the very start/end an arrow would move the focus out of the field instead.
+            val edge = if (lines < 0) ic.getTextBeforeCursor(1, 0) else ic.getTextAfterCursor(1, 0)
+            if (edge.isNullOrEmpty()) return@repeat
+            sendArrow(ic, if (lines < 0) KeyEvent.KEYCODE_DPAD_UP else KeyEvent.KEYCODE_DPAD_DOWN)
         }
         lastCorrection = null
         autoSpace = false
     }
+
+    private fun sendArrow(ic: InputConnection, code: Int) {
+        // With the second finger down, Shift+arrow extends the selection (like a hardware keyboard).
+        val meta = if (trackpadSelecting) KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON else 0
+        val t = SystemClock.uptimeMillis()
+        ic.sendKeyEvent(KeyEvent(t, t, KeyEvent.ACTION_DOWN, code, 0, meta))
+        ic.sendKeyEvent(KeyEvent(t, t, KeyEvent.ACTION_UP, code, 0, meta))
+    }
+
+    /** A second finger on the trackpad starts (or stops) selecting text. */
+    fun toggleTrackpadSelection() {
+        if (!trackpadActive) return
+        trackpadSelecting = !trackpadSelecting
+    }
+
+    /** Called when the space bar trackpad starts/ends (pending word state no longer applies). */
+    fun onTrackpad(active: Boolean) {
+        trackpadActive = active
+        if (!active) trackpadSelecting = false
+        if (active) {
+            word.clear()
+            suggestions = emptyList()
+        } else {
+            publishSuggestions()
+        }
+    }
+
+    /** While true the keyboard shows blank keys: the whole surface is a trackpad. */
+    var trackpadActive by mutableStateOf(false)
+        private set
 
     fun showInputMethodPicker() {
         val imm = service.getSystemService(android.view.inputmethod.InputMethodManager::class.java)
@@ -483,6 +574,7 @@ class KeyboardController(
     }
 
     private fun publishSuggestions() {
+        refreshSmartChips()
         suggestJob?.cancel()
         val typed = word.toString()
         if (typed.isNotEmpty()) pasteChip = null
@@ -668,7 +760,12 @@ class KeyboardController(
             beforeLen = before.length
             afterLen = after.length
         }
-        if (target.isBlank()) {
+        val copied = if (tool.usesCopiedMessage) clipboard.recent()?.text?.takeIf { it.isNotBlank() } else null
+        if (tool.usesCopiedMessage && copied == null) {
+            showNotice("Copie primeiro a mensagem recebida (toque e segure nela e escolha Copiar)")
+            return
+        }
+        if (target.isBlank() && tool != WritingTool.REPLY) {
             showNotice("Escreva ou selecione um texto primeiro")
             return
         }
@@ -688,7 +785,7 @@ class KeyboardController(
                     if (tool == WritingTool.REVISE) {
                         TextPolisher(app.engines).polish(target, style, settings.vocabulary) { }.takeIf { it.usedModel }?.text
                     } else {
-                        TextTools(app.engines).apply(tool, target, instruction)
+                        TextTools(app.engines).apply(tool, target, instruction, copied)
                     }
                 }.getOrNull()
             }
@@ -697,31 +794,89 @@ class KeyboardController(
                 showNotice("Não foi possível concluir agora. Tente de novo.")
                 return@launch
             }
-            val conn = this@KeyboardController.ic ?: return@launch
-            conn.beginBatchEdit()
-            if (replaceSelection) {
-                if (conn.getSelectedText(0)?.toString() != target) {
-                    conn.endBatchEdit()
-                    showNotice("O texto mudou enquanto a IA trabalhava")
-                    return@launch
-                }
-                conn.commitText(result, 1)
-            } else {
-                val nowBefore = conn.getTextBeforeCursor(MAX_REVISION_CHARS, 0)?.toString().orEmpty()
-                val nowAfter = conn.getTextAfterCursor(MAX_REVISION_CHARS, 0)?.toString().orEmpty()
-                if (nowBefore.length != beforeLen || nowAfter.length != afterLen || nowBefore + nowAfter != target) {
-                    conn.endBatchEdit()
-                    showNotice("O texto mudou enquanto a IA trabalhava")
-                    return@launch
-                }
-                conn.deleteSurroundingText(beforeLen, afterLen)
-                conn.commitText(result, 1)
-            }
-            conn.endBatchEdit()
-            lastRevision = Revision(target, result)
-            word.clear()
-            publishSuggestions()
+            // Nothing changes in the field until the user decides (preview first).
+            toolResult = ToolResult(tool, target, result, replaceSelection, beforeLen, afterLen)
+            panel = Panel.PREVIEW
         }
+    }
+
+    /** Replaces the original text with the tool's output (after checking it did not change). */
+    fun applyToolResult() {
+        val r = toolResult ?: return
+        val conn = ic ?: return
+        conn.beginBatchEdit()
+        if (r.replaceSelection) {
+            if (conn.getSelectedText(0)?.toString() != r.original) {
+                conn.endBatchEdit()
+                showNotice("O texto mudou enquanto a IA trabalhava")
+                return
+            }
+            conn.commitText(r.output, 1)
+        } else {
+            val nowBefore = conn.getTextBeforeCursor(MAX_REVISION_CHARS, 0)?.toString().orEmpty()
+            val nowAfter = conn.getTextAfterCursor(MAX_REVISION_CHARS, 0)?.toString().orEmpty()
+            if (nowBefore.length != r.beforeLen || nowAfter.length != r.afterLen || nowBefore + nowAfter != r.original) {
+                conn.endBatchEdit()
+                showNotice("O texto mudou enquanto a IA trabalhava")
+                return
+            }
+            conn.deleteSurroundingText(r.beforeLen, r.afterLen)
+            conn.commitText(r.output, 1)
+        }
+        conn.endBatchEdit()
+        lastRevision = Revision(r.original, r.output)
+        closeToolResult()
+    }
+
+    /** Inserts the output after the text (keeps the original). */
+    fun insertToolResult() {
+        val r = toolResult ?: return
+        val conn = ic ?: return
+        if (!r.replaceSelection && r.afterLen > 0) {
+            // Move to the end of the field first so the original stays intact.
+            val after = conn.getTextAfterCursor(MAX_REVISION_CHARS, 0)?.length ?: 0
+            if (after > 0) moveCursor(after)
+        } else if (r.replaceSelection) {
+            val end = (conn.getExtractedText(android.view.inputmethod.ExtractedTextRequest(), 0)?.selectionEnd) ?: -1
+            if (end >= 0) conn.setSelection(end, end)
+        }
+        val before = conn.getTextBeforeCursor(2, 0)?.toString().orEmpty()
+        val sep = when {
+            before.isEmpty() -> ""
+            before.endsWith("\n\n") -> ""
+            before.endsWith("\n") -> "\n"
+            else -> "\n\n"
+        }
+        conn.commitText(sep + r.output, 1)
+        closeToolResult()
+    }
+
+    /** Puts the output on the clipboard. */
+    fun copyToolResult() {
+        val r = toolResult ?: return
+        val cm = service.getSystemService(android.content.ClipboardManager::class.java) ?: return
+        cm.setPrimaryClip(android.content.ClipData.newPlainText(r.tool.label, r.output))
+        showNotice("Copiado")
+        closeToolResult()
+    }
+
+    /** Replaces the selected word with one of the synonyms. */
+    fun replaceWith(text: String) {
+        val r = toolResult ?: return
+        val conn = ic ?: return
+        if (r.replaceSelection && conn.getSelectedText(0)?.toString() == r.original) {
+            conn.commitText(text, 1)
+        } else {
+            showNotice("Selecione de novo a palavra a substituir")
+        }
+        closeToolResult()
+    }
+
+    fun closeToolResult() {
+        toolResult = null
+        panel = Panel.KEYBOARD
+        word.clear()
+        publishSuggestions()
     }
 
     /** Dictate an instruction ("transforme em um e-mail para o meu chefe") for the selected text. */
@@ -887,6 +1042,13 @@ class KeyboardController(
     }
 
     @androidx.annotation.VisibleForTesting
+    internal fun showSmartPreview(chips: List<SmartChip> = emptyList(), result: ToolResult? = null) {
+        smartChips = chips
+        toolResult = result
+        if (result != null) panel = Panel.PREVIEW
+    }
+
+    @androidx.annotation.VisibleForTesting
     internal fun showPreview(session: DictationSession?, suggestions: List<Suggestion> = emptyList(), shift: ShiftState = ShiftState.OFF) {
         dictation = session
         panel = if (session != null) Panel.DICTATION else Panel.KEYBOARD
@@ -924,7 +1086,14 @@ class KeyboardController(
                 dictation = null
                 quickDictation = false
                 quickHolding = false
-                runTool(WritingTool.CUSTOM, instruction = text)
+                panel = Panel.KEYBOARD
+                // "Me lembre amanhã às 8h de ligar para o banco": a reminder, not a text edit.
+                val reminder = com.fernandogodinho.teclado.ime.smart.Reminders.parse(text)
+                if (reminder != null) {
+                    smartChips = listOf(SmartChip("⏰ ${reminder.summary}", SmartKind.REMINDER, "reminder-voice") { confirmReminder(reminder, 0) })
+                } else {
+                    runTool(WritingTool.CUSTOM, instruction = text)
+                }
             }
             // Passwords are always confirmed on screen (masked) before they go into the field.
             session.mode == DictationMode.SECRET || fieldKind == FieldKind.PASSWORD -> panel = Panel.DICTATION
@@ -946,6 +1115,7 @@ class KeyboardController(
         panel = Panel.KEYBOARD
         if (ic == null || text.isEmpty()) return
         val inserted = if (mode == DictationMode.TEXT) adaptToContext(ic, text) else text
+        if (mode == DictationMode.TEXT) checkSensitive(inserted)
         ic.commitText(inserted, 1)
         cursorBelief += inserted.length
         // Codes and passwords leave no trace: no "original" toggle is kept for them.
@@ -1016,7 +1186,176 @@ class KeyboardController(
         return t
     }
 
+    // ---------------------------------------------------------------------------------------
+    // Local helpers: calculator, conversions, saved replies, reminders, e-mail domains
+    // ---------------------------------------------------------------------------------------
+
+    private fun refreshSmartChips() {
+        if (privateField || panel != Panel.KEYBOARD || dictation != null) {
+            if (smartChips.isNotEmpty()) smartChips = emptyList()
+            return
+        }
+        val before = ic?.getTextBeforeCursor(160, 0)?.toString().orEmpty()
+        if (before.isEmpty()) {
+            if (smartChips.isNotEmpty()) smartChips = emptyList()
+            return
+        }
+        val chips = mutableListOf<SmartChip>()
+        val line = before.substringAfterLast('\n')
+
+        // "/lembrete amanhã às 8h ligar para o banco", "/timer 10 min"
+        if (line.trimStart().startsWith("/") && com.fernandogodinho.teclado.ime.smart.Reminders.looksLikeCommand(line.trim())) {
+            com.fernandogodinho.teclado.ime.smart.Reminders.parse(line.trim())?.let { r ->
+                val typedLength = line.length - (line.length - line.trimStart().length)
+                chips += SmartChip("⏰ ${r.summary}", SmartKind.REMINDER, "reminder") { confirmReminder(r, typedLength) }
+            }
+        }
+        // Saved replies: "/assin" (prefix) or a word that is exactly a shortcut.
+        val slash = SLASH_SHORTCUT.find(before)
+        val shortcutTyped = slash?.groupValues?.get(1)
+        val snippets = when {
+            shortcutTyped != null -> app.snippets.matching(shortcutTyped).map { it to shortcutTyped.length + 1 }
+            word.isNotEmpty() -> app.snippets.items.value
+                .filter { it.shortcut.isNotEmpty() && it.shortcut == com.fernandogodinho.teclado.core.SnippetStore.normalizeShortcut(word.toString()) }
+                .map { it to word.length }
+            else -> emptyList()
+        }
+        if (chips.none { it.kind == SmartKind.REMINDER }) {
+            snippets.forEach { (snip, remove) ->
+                val label = if (snip.sensitive) "🔒 ${snip.title}" else "↳ ${snip.title.ifBlank { snip.text.take(24) }}"
+                chips += SmartChip(label, SmartKind.SNIPPET, "snippet:${snip.id}") { insertSnippet(snip, remove) }
+            }
+        }
+        com.fernandogodinho.teclado.ime.smart.Calculator.detect(before)?.let { m ->
+            chips += SmartChip("${m.expression} = ${m.result}", SmartKind.CALCULATOR, "calc") {
+                val needsSpace = before.endsWith("=") && !before.endsWith(" =")
+                commitRaw(if (before.endsWith(" ")) m.result else if (needsSpace) m.result else " ${m.result}")
+            }
+        }
+        com.fernandogodinho.teclado.ime.smart.UnitConverter.detect(before)?.let { m ->
+            chips += SmartChip(m.label, SmartKind.CONVERSION, "conv") {
+                val t = before.trimEnd()
+                commitRaw(if (t.endsWith("=") || t.endsWith("?")) " ${m.insert}" else " = ${m.insert}")
+            }
+        }
+        if (fieldKind == FieldKind.EMAIL) {
+            EMAIL_AT.find(before)?.let { m ->
+                val partial = m.groupValues[1].lowercase()
+                EMAIL_DOMAINS.filter { it.startsWith(partial) && it != partial }.take(3).forEach { domain ->
+                    chips += SmartChip("@$domain", SmartKind.EMAIL_DOMAIN, "mail:$domain") { commitRaw(domain.removePrefix(partial)) }
+                }
+            }
+        }
+        if (chips != smartChips) smartChips = chips
+    }
+
+    private fun insertSnippet(s: com.fernandogodinho.teclado.core.Snippet, removeChars: Int) {
+        val ic = ic ?: return
+        if (s.sensitive) {
+            val now = SystemClock.uptimeMillis()
+            if (pendingSensitiveSnippet != s.id || now - pendingSensitiveAt > 5_000) {
+                pendingSensitiveSnippet = s.id
+                pendingSensitiveAt = now
+                showNotice("Conteúdo protegido: toque de novo para inserir “${s.title}”")
+                return
+            }
+            pendingSensitiveSnippet = null
+        }
+        ic.beginBatchEdit()
+        val before = ic.getTextBeforeCursor(removeChars, 0)?.toString().orEmpty()
+        if (before.length == removeChars) ic.deleteSurroundingText(removeChars, 0)
+        ic.commitText(s.text, 1)
+        ic.endBatchEdit()
+        word.clear()
+        autoSpace = false
+        publishSuggestions()
+        updateAutoCaps()
+    }
+
+    /** Inserts a saved reply from the panel (no shortcut typed). */
+    fun insertSnippetFromPanel(s: com.fernandogodinho.teclado.core.Snippet) {
+        panel = Panel.KEYBOARD
+        insertSnippet(s, 0)
+    }
+
+    private fun confirmReminder(r: com.fernandogodinho.teclado.ime.smart.Reminders.Request, typedLength: Int) {
+        val ic = ic ?: return
+        // Remove the "/lembrete …" command from the field, then let the user confirm in the app.
+        val before = ic.getTextBeforeCursor(typedLength, 0)?.toString().orEmpty()
+        if (before.length == typedLength && before.trimStart().startsWith("/")) ic.deleteSurroundingText(typedLength, 0)
+        word.clear()
+        publishSuggestions()
+        val intent = when (r) {
+            is com.fernandogodinho.teclado.ime.smart.Reminders.Request.Event -> {
+                val start = r.at.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                Intent(Intent.ACTION_INSERT)
+                    .setData(android.provider.CalendarContract.Events.CONTENT_URI)
+                    .putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, start)
+                    .putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, start + 30 * 60_000L)
+                    .putExtra(android.provider.CalendarContract.Events.TITLE, r.title.ifBlank { "Lembrete" })
+                    .putExtra(android.provider.CalendarContract.Events.HAS_ALARM, 1)
+            }
+            is com.fernandogodinho.teclado.ime.smart.Reminders.Request.Timer -> Intent(android.provider.AlarmClock.ACTION_SET_TIMER)
+                .putExtra(android.provider.AlarmClock.EXTRA_LENGTH, r.seconds)
+                .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE, r.title)
+                .putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI, false)
+        }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { service.startActivity(intent) }
+            .onFailure { showNotice("Nenhum app de agenda ou relógio encontrado para criar o lembrete") }
+    }
+
+    /** Warns once per field about card numbers, CPF or CNPJ about to be sent. Nothing is stored. */
+    private fun checkSensitive(text: String) {
+        if (privateField || fieldKind != FieldKind.TEXT) return
+        val kind = com.fernandogodinho.teclado.ime.smart.SensitiveData.detect(text) ?: return
+        if (sensitiveWarned.add(kind)) showNotice(kind.warning)
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // Composition editor ("Escrever com calma")
+    // ---------------------------------------------------------------------------------------
+
+    /** Opens a full-screen editor for long messages; the result comes back into this field. */
+    fun openComposer() {
+        if (privateField) {
+            showNotice("O editor fica desligado em campos privados")
+            return
+        }
+        val info = editorInfo ?: return
+        val selected = ic?.getSelectedText(0)?.toString().orEmpty()
+        app.composer.begin(info.packageName.orEmpty(), info.fieldId, selected)
+        service.startActivity(
+            Intent(service, com.fernandogodinho.teclado.ui.ComposerActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        )
+    }
+
+    /** When the field the composer was opened from gets focus again, insert the composed text. */
+    private fun deliverComposerText(info: EditorInfo) {
+        val pending = app.composer.takeFor(info.packageName.orEmpty(), info.fieldId) ?: return
+        scope.launch {
+            delay(150)
+            val ic = ic ?: return@launch
+            ic.beginBatchEdit()
+            if (pending.replaceSelection && ic.getSelectedText(0)?.toString() == pending.original) {
+                ic.commitText(pending.text, 1)
+            } else {
+                ic.commitText(adaptToContext(ic, pending.text), 1)
+            }
+            ic.endBatchEdit()
+            word.clear()
+            publishSuggestions()
+            updateAutoCaps()
+        }
+    }
+
     companion object {
+        private val SLASH_SHORTCUT = Regex("(?:^|\\s)/([\\p{L}\\d_-]{1,24})$")
+        private val EMAIL_AT = Regex("[\\w.+-]+@([\\w.-]*)$")
+        private val EMAIL_DOMAINS = listOf(
+            "gmail.com", "hotmail.com", "outlook.com", "yahoo.com.br", "icloud.com", "live.com", "uol.com.br",
+            "bol.com.br", "terra.com.br", "yahoo.com", "outlook.com.br", "hotmail.com.br",
+        )
         private const val MAX_REVISION_CHARS = 4000
         private val OTP_REGEX = Regex("(?<![0-9])[0-9]{4,8}(?![0-9])")
         private val CODE_HINTS = listOf("código", "codigo", "code", "otp", "verifica", "token", "2fa", "pin", "uso único")

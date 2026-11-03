@@ -32,6 +32,9 @@ import com.fernandogodinho.teclado.tecladoApp
 import kotlinx.coroutines.launch
 import com.fernandogodinho.teclado.ui.screens.AboutScreen
 import com.fernandogodinho.teclado.ui.screens.BenchmarkScreen
+import com.fernandogodinho.teclado.ui.screens.SnippetsScreen
+import com.fernandogodinho.teclado.ui.screens.SupportScreen
+import com.fernandogodinho.teclado.ui.screens.TvScreen
 import com.fernandogodinho.teclado.ui.screens.DictationSettingsScreen
 import com.fernandogodinho.teclado.ui.screens.HomeScreen
 import com.fernandogodinho.teclado.ui.screens.KeyboardSettingsScreen
@@ -131,6 +134,9 @@ class MainActivity : ComponentActivity() {
         when (route) {
             ROUTE_MODELS -> ModelsScreen(onBack = back, onBenchmark = { navigate(ROUTE_BENCHMARK) })
             ROUTE_BENCHMARK -> BenchmarkScreen(onBack = back, onModels = { navigate(ROUTE_MODELS) })
+            ROUTE_TV -> TvScreen(onBack = back)
+            ROUTE_SUPPORT -> SupportScreen(onBack = back)
+            ROUTE_SNIPPETS -> SnippetsScreen(onBack = back)
             ROUTE_DICTATION -> DictationSettingsScreen(onBack = back)
             ROUTE_KEYBOARD -> KeyboardSettingsScreen(onBack = back)
             ROUTE_VOCABULARY -> VocabularyScreen(onBack = back)
@@ -196,6 +202,9 @@ class MainActivity : ComponentActivity() {
         const val ROUTE_VOCABULARY = "vocabulary"
         const val ROUTE_ABOUT = "about"
         const val ROUTE_BENCHMARK = "benchmark"
-        private val ROUTES = setOf(ROUTE_HOME, ROUTE_MODELS, ROUTE_DICTATION, ROUTE_KEYBOARD, ROUTE_VOCABULARY, ROUTE_ABOUT, ROUTE_BENCHMARK)
+        const val ROUTE_TV = "tv"
+        const val ROUTE_SUPPORT = "support"
+        const val ROUTE_SNIPPETS = "snippets"
+        private val ROUTES = setOf(ROUTE_HOME, ROUTE_MODELS, ROUTE_DICTATION, ROUTE_KEYBOARD, ROUTE_VOCABULARY, ROUTE_ABOUT, ROUTE_BENCHMARK, ROUTE_TV, ROUTE_SUPPORT, ROUTE_SNIPPETS)
     }
 }

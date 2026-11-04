@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<!-- HEAD -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Teclado para Android que transforma a sua voz em texto revisado, em português impecável, com IA que roda inteiramente no celular. Grátis e de código aberto.">
+<meta name="theme-color" content="#F5F6FA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B0F1D" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Teclado do Fernando Godinho">
+<meta property="og:description" content="Fale. O texto chega revisado. Ditado com IA 100% no celular, grátis e de código aberto.">
+<meta property="og:type" content="website">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="styles.css">
+<!-- /HEAD -->
+<title>Teclado do Fernando Godinho</title>
+</head>
+<body>
+<!-- BODY -->
+<header class="top">
+  <div class="wrap top__inner">
+    <a class="brand" href="#inicio" aria-label="Início">
+      <img src="icon.svg" alt="" width="30" height="30">
+      <span>Teclado do Fernando Godinho</span>
+    </a>
+    <nav class="top__nav" aria-label="Seções">
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#recursos">Recursos</a>
+      <a href="#tv">TV</a>
+      <a href="#velocidade">Velocidade</a>
+      <a href="#privacidade">Privacidade</a>
+      <a href="#apoie">Apoie</a>
+    </nav>
+    <a class="btn btn--small" href="download/Teclado-do-Fernando-Godinho-1.2.0.apk">Baixar</a>
+  </div>
+</header>
+
+<main id="inicio">
+  <!-- Hero: the product at work. A chat on a phone, the real keyboard dictating, and what the AI did to the speech. -->
+  <section class="hero">
+    <div class="wrap hero__grid">
+      <div class="hero__copy">
+        <p class="pill-line"><span class="dot dot--rec" aria-hidden="true"></span> Grátis · código aberto · Android 8 ou superior</p>
+        <h1>Fale. O texto chega <span class="hl">revisado</span>.</h1>
+        <p class="lede">
+          Você dita do jeito que fala. O Whisper transcreve, uma IA no próprio celular revisa, e o campo recebe
+          um texto em português impecável, sem “né”, sem repetição e sem frase pela metade.
+          Nada do que você diz sai do aparelho.
+        </p>
+        <div class="cta">
+          <a class="btn btn--big" href="download/Teclado-do-Fernando-Godinho-1.2.0.apk">
+            <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3a1 1 0 0 1 1 1v9.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1Zm-7 15a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z"/></svg>
+            Baixar para Android · v1.2.0
+          </a>
+          <a class="btn btn--ghost btn--big" href="#como-funciona">Ver como funciona</a>
+        </div>
+        <p class="cta__meta">11 MB · Android 8.0 ou superior · os modelos de IA são baixados pelo app</p>
+        <ul class="facts" aria-label="Em resumo">
+          <li><b>0</b><span>servidores</span></li>
+          <li><b>0</b><span>anúncios</span></li>
+          <li><b>0</b><span>contas</span></li>
+          <li><b>100%</b><span>no celular</span></li>
+        </ul>
+      </div>
+
+      <div class="hero__stage">
+        <div class="glow" aria-hidden="true"></div>
+        <figure class="phone phone--hero" aria-label="Conversa sendo ditada com o teclado">
+          <div class="phone__screen">
+            <div class="mock mock--light">
+              <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+              <div class="chat__head"><span class="avatar">AP</span><span><b>Ana Paula</b><small>online</small></span></div>
+              <div class="chat">
+                <p class="chat__day">Hoje</p>
+                <p class="bubble bubble--out">Cheguei, já estou na sala de reunião.<small>09:12 ✓✓</small></p>
+                <p class="bubble bubble--in">Como foi a reunião com o cliente?</p>
+                <p class="bubble bubble--out">Foi ótima! O cliente aprovou a proposta, mas pediu que apresentássemos os números na terça-feira pela manhã.<small>ditado · 10:02 ✓✓</small></p>
+              </div>
+              <div class="chat__input"><span>Mensagem</span></div>
+            </div>
+            <img class="phone__kbd" src="img/kbd-dictation.webp" width="600" height="417" alt="Teclado ouvindo: a transcrição aparece ao vivo e as ondas mostram a voz">
+          </div>
+        </figure>
+        <figure class="redline" aria-label="O que a IA faz com a fala">
+          <figcaption>Você fala</figcaption>
+          <p class="redline__raw"><del>é então tipo</del> eu queria saber se você pode me mandar o relatório até sexta <del>né</del> porque <del>o</del> o cliente pediu pra gente apresentar na reunião de <del>segunda não pera</del> terça de manhã</p>
+          <p class="redline__arrow" aria-hidden="true">↓ revisado no celular</p>
+          <p class="redline__clean">Gostaria de saber se você pode me enviar o relatório até sexta-feira, pois o cliente pediu que o apresentássemos na reunião de terça-feira pela manhã.<span class="caret"></span></p>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works: the pipeline, drawn inside the outline of the phone. -->
+  <section id="como-funciona" class="band band--night">
+    <div class="wrap">
+      <p class="eyebrow">Como funciona</p>
+      <h2>Da sua voz ao texto pronto, sem sair do celular</h2>
+      <p class="section__lede">Dois modelos de IA trabalham em sequência no processador do aparelho. Enquanto você fala, o que já foi dito vai sendo transcrito nas pausas; quando você para, falta só o finalzinho.</p>
+      <div class="device-outline">
+        <span class="device-outline__label"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 2v16h10V4H7Zm4 13h2v2h-2v-2Z"/></svg> Dentro do seu celular</span>
+        <ol class="pipeline">
+          <li class="stage">
+            <span class="stage__n">1</span>
+            <h3>Você fala</h3>
+            <div class="wave" aria-hidden="true"><i class="w2"></i><i class="w4"></i><i class="w6"></i><i class="w3"></i><i class="w7"></i><i class="w5"></i><i class="w2"></i><i class="w6"></i><i class="w4"></i><i class="w7"></i><i class="w3"></i><i class="w5"></i><i class="w6"></i><i class="w2"></i><i class="w4"></i><i class="w5"></i><i class="w3"></i><i class="w6"></i></div>
+            <p>Microfone a 16 kHz. O áudio fica só na memória e é apagado no fim de cada ditado.</p>
+          </li>
+          <li class="stage">
+            <span class="stage__n">2</span>
+            <h3>O Whisper transcreve</h3>
+            <p class="stage__raw">é então tipo eu queria saber se você pode me mandar o relatório até sexta né</p>
+            <p><span class="chip">whisper.cpp</span> Base, Small ou Large v3 Turbo, conforme a memória do aparelho.</p>
+          </li>
+          <li class="stage">
+            <span class="stage__n">3</span>
+            <h3>A IA revisa</h3>
+            <p class="stage__clean">Gostaria de saber se você pode me enviar o relatório até sexta-feira.</p>
+            <p><span class="chip">llama.cpp</span> Gemma ou Qwen tiram vícios, repetições e autocorreções e acertam a gramática.</p>
+          </li>
+          <li class="stage">
+            <span class="stage__n">4</span>
+            <h3>O texto entra no campo</h3>
+            <div class="stage__field">Gostaria de saber se você pode…<span class="caret"></span></div>
+            <p>Em qualquer app: WhatsApp, Gmail, Notas, navegador. Não gostou? Um toque volta para o original.</p>
+          </li>
+        </ol>
+      </div>
+      <div class="no-cloud">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M14 36h22a8 8 0 0 0 1-15.9A12 12 0 0 0 14 18a9 9 0 0 0 0 18Z"/><path stroke="currentColor" stroke-width="3" stroke-linecap="round" d="M8 8l32 32"/></svg>
+        <p><b>Nenhum servidor envolvido.</b> Não existe nuvem do teclado: a voz e o texto nunca passam pela internet.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filmstrip of real keyboard captures in context. -->
+  <section id="galeria" class="band">
+    <div class="wrap">
+      <div class="head-row">
+        <div>
+          <p class="eyebrow">Veja de perto</p>
+          <h2>Um teclado completo, com a voz no centro</h2>
+        </div>
+        <div class="strip-nav" aria-hidden="true">
+          <button type="button" class="round-btn" id="strip-prev" tabindex="-1">←</button>
+          <button type="button" class="round-btn" id="strip-next" tabindex="-1">→</button>
+        </div>
+      </div>
+      <p class="section__lede">Capturas reais do teclado. Arraste para o lado para ver todas.</p>
+    </div>
+    <div class="strip" id="strip" tabindex="0" aria-label="Capturas de tela do teclado">
+      <figure class="shot">
+        <div class="phone">
+          <div class="phone__screen">
+            <div class="mock mock--light">
+              <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+              <div class="app-bar"><b>Notas</b></div>
+              <div class="note-doc"><p class="note-doc__title">Reunião de terça</p><p>Levar os números do trimestre.</p><p class="muted">Ditando…</p></div>
+            </div>
+            <img class="phone__kbd" src="img/kbd-dictation.webp" width="600" height="417" alt="Ditado ao vivo com a transcrição aparecendo enquanto a pessoa fala">
+          </div>
+        </div>
+        <figcaption><b>Ditado ao vivo</b>Você vê a transcrição enquanto fala.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="phone phone--dark">
+          <div class="phone__screen">
+            <div class="mock mock--dark">
+              <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+              <div class="app-bar"><b>Novo e-mail</b></div>
+              <div class="mail"><p><span class="muted">Para</span> cliente@empresa.com.br</p><p><span class="muted">Assunto</span> Relatório</p></div>
+            </div>
+            <img class="phone__kbd" src="img/kbd-polishing-dark.webp" width="600" height="417" alt="A IA reescrevendo a fala em texto formal, no tema escuro">
+          </div>
+        </div>
+        <figcaption><b>Revisão em tempo real</b>O texto revisado é escrito diante dos seus olhos.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="phone">
+          <div class="phone__screen">
+            <div class="mock mock--light">
+              <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+              <div class="app-bar"><b>Verificação</b></div>
+              <div class="otp-screen"><p>Digite o código enviado por SMS</p><div class="otp otp--small"><span>4</span><span>8</span><span>2</span><span>9</span><span class="empty"></span><span class="empty"></span></div></div>
+            </div>
+            <img class="phone__kbd" src="img/kbd-code.webp" width="600" height="417" alt="Ditado de código de verificação transformando palavras em números">
+          </div>
+        </div>
+        <figcaption><b>Códigos por voz</b>“Quatro, oito, dois, nove” vira 4829.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="phone">
+          <div class="phone__screen">
+            <div class="mock mock--light">
+              <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+              <div class="app-bar"><b>Entrar</b></div>
+              <div class="login"><span class="login__field">fernando@exemplo.com</span><span class="login__field login__field--secret">••••••</span></div>
+            </div>
+            <img class="phone__kbd" src="img/kbd-password.webp" width="600" height="417" alt="Senha ditada aparece oculta e só entra no campo após confirmação">
+          </div>
+        </div>
+        <figcaption><b>Senhas protegidas</b>Oculta, sem IA e só entra quando você confirma.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="phone">
+          <div class="phone__screen">
+            <div class="mock mock--light">
+              <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+              <div class="app-bar"><b>Documento</b></div>
+              <div class="note-doc"><p><mark>oi pessoal amanhã não vai ter aula por causa da chuva</mark></p><p class="muted">Texto selecionado</p></div>
+            </div>
+            <img class="phone__kbd" src="img/kbd-tools.webp" width="600" height="417" alt="Ferramentas de IA: corrigir, mais formal, mais curto, tópicos, e-mail e traduzir">
+          </div>
+        </div>
+        <figcaption><b>Ferramentas de IA</b>Mais formal, mais curto, tópicos, e-mail, tradução.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="phone">
+          <div class="phone__screen">
+            <div class="mock mock--light">
+              <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+              <div class="chat__head"><span class="avatar avatar--b">JM</span><span><b>João Marcos</b><small>digitando…</small></span></div>
+              <div class="chat"><p class="bubble bubble--in">Você vem amanhã?</p></div>
+              <div class="chat__input chat__input--typing"><span>Claro, voce</span></div>
+            </div>
+            <img class="phone__kbd" src="img/kbd-light.webp" width="600" height="417" alt="Sugestões em português corrigindo voce para você">
+          </div>
+        </div>
+        <figcaption><b>Sugestões em português</b>“voce” vira “você” sozinho.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="phone phone--dark">
+          <div class="phone__screen">
+            <div class="mock mock--dark">
+              <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+              <div class="search"><span>Pesquisar</span></div>
+              <div class="note-doc"><p class="muted">Tema escuro automático, que segue o do sistema.</p></div>
+            </div>
+            <img class="phone__kbd" src="img/kbd-dark.webp" width="600" height="417" alt="Teclado no tema escuro">
+          </div>
+        </div>
+        <figcaption><b>Tema escuro</b>Segue o tema do celular.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="phone">
+          <div class="phone__screen">
+            <div class="mock mock--light">
+              <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+              <div class="app-bar"><b>Mensagens</b></div>
+              <div class="note-doc"><p class="muted">Teclado encostado no lado do polegar.</p></div>
+            </div>
+            <img class="phone__kbd" src="img/kbd-onehanded.webp" width="600" height="417" alt="Modo uma mão com o teclado alinhado à direita">
+          </div>
+        </div>
+        <figcaption><b>Modo uma mão</b>Para celulares grandes.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Features: each card carries a small working illustration of the feature. -->
+  <section id="recursos" class="band band--soft">
+    <div class="wrap">
+      <p class="eyebrow">Recursos</p>
+      <h2>Feito para você parar de digitar</h2>
+      <p class="section__lede">Cada recurso existe para que falar seja mais rápido do que digitar, inclusive nas tarefas chatas.</p>
+      <div class="bento">
+        <article class="card card--wide">
+          <div class="art art--space" aria-hidden="true">
+            <div class="trackpad"><span class="trackpad__cursor"></span><span class="trackpad__finger"></span><span class="trackpad__hint">toque e segure o espaço · deslize para mover o cursor</span></div>
+          </div>
+          <h3>A barra de espaço vira um trackpad</h3>
+          <p>Toque e segure o espaço: o teclado inteiro vira um trackpad, como no iPhone, para levar o cursor exatamente onde você quer. Com dois dedos, seleciona o texto. Para ditar, toque no microfone.</p>
+        </article>
+        <article class="card">
+          <div class="art" aria-hidden="true">
+            <p class="said">“quatro, oito, dois, nove, um, três”</p>
+            <div class="otp"><span>4</span><span>8</span><span>2</span><span>9</span><span>1</span><span>3</span></div>
+          </div>
+          <h3>Códigos de verificação</h3>
+          <p>Em campos de código, o teclado entende sozinho que deve escrever só números.</p>
+        </article>
+        <article class="card">
+          <div class="art" aria-hidden="true">
+            <p class="said">“A maiúsculo, b, um, dois, arroba”</p>
+            <div class="secret"><span>• • • • •</span><b>Confirmar</b></div>
+          </div>
+          <h3>Senhas soletradas</h3>
+          <p>Aparece oculta, não passa pela IA, não é salva e só entra no campo quando você confirma.</p>
+        </article>
+        <article class="card">
+          <div class="art art--chips" aria-hidden="true">
+            <span>Corrigir</span><span>Mais formal</span><span>Mais curto</span><span>Em tópicos</span><span>E-mail</span><span>Traduzir</span>
+          </div>
+          <h3>Reescreva qualquer texto</h3>
+          <p>Selecione um trecho e escolha a ferramenta. Ou diga o que quer: “transforme num convite para o aniversário da Ana”.</p>
+        </article>
+        <article class="card">
+          <div class="art" aria-hidden="true">
+            <div class="paste"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 2h6a2 2 0 0 1 2 2h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1a2 2 0 0 1 2-2Zm0 2v2h6V4H9Z"/></svg> Colar <b>482913</b></div>
+          </div>
+          <h3>Colar inteligente</h3>
+          <p>Por três minutos o teclado oferece colar o que você copiou. Se houver um código, cola só os números.</p>
+        </article>
+        <article class="card card--wide">
+          <div class="art art--swipe" aria-hidden="true">
+            <svg class="swipe-art" viewBox="0 0 400 120" role="presentation">
+              <g class="swipe-keys">
+                <rect x="4" y="6" width="36" height="30" rx="7"/><rect x="44" y="6" width="36" height="30" rx="7"/><rect x="84" y="6" width="36" height="30" rx="7"/><rect x="124" y="6" width="36" height="30" rx="7"/><rect x="164" y="6" width="36" height="30" rx="7"/><rect x="204" y="6" width="36" height="30" rx="7"/><rect x="244" y="6" width="36" height="30" rx="7"/><rect x="284" y="6" width="36" height="30" rx="7"/><rect x="324" y="6" width="36" height="30" rx="7"/><rect x="364" y="6" width="32" height="30" rx="7"/>
+                <rect x="4" y="44" width="36" height="30" rx="7"/><rect x="44" y="44" width="36" height="30" rx="7"/><rect x="84" y="44" width="36" height="30" rx="7"/><rect x="124" y="44" width="36" height="30" rx="7"/><rect x="164" y="44" width="36" height="30" rx="7"/><rect x="204" y="44" width="36" height="30" rx="7"/><rect x="244" y="44" width="36" height="30" rx="7"/><rect x="284" y="44" width="36" height="30" rx="7"/><rect x="324" y="44" width="36" height="30" rx="7"/><rect x="364" y="44" width="32" height="30" rx="7"/>
+                <rect x="64" y="82" width="36" height="30" rx="7"/><rect x="104" y="82" width="36" height="30" rx="7"/><rect x="144" y="82" width="36" height="30" rx="7"/><rect x="184" y="82" width="36" height="30" rx="7"/><rect x="224" y="82" width="36" height="30" rx="7"/><rect x="264" y="82" width="36" height="30" rx="7"/><rect x="304" y="82" width="36" height="30" rx="7"/>
+              </g>
+              <path class="swipe-path" d="M202 97 C230 70, 300 30, 342 21 C320 40, 230 80, 162 97 C120 70, 100 30, 102 21"/>
+              <circle class="swipe-dot" cx="102" cy="21" r="7"/>
+            </svg>
+            <p class="swipe-word">v → o → c → e = <b>você</b></p>
+          </div>
+          <h3>Digitação por deslize</h3>
+          <p>Deslize o dedo pelas letras sem soltar e a palavra aparece, com acentos e ç. As outras opções ficam na barra; apagar logo em seguida remove a palavra inteira.</p>
+        </article>
+        <article class="card">
+          <div class="art art--tags" aria-hidden="true"><span>aba anônima</span><span>Firefox Focus</span><span>DuckDuckGo</span><span>Signal</span></div>
+          <h3>Modo privado automático</h3>
+          <p>Em abas anônimas e em apps de privacidade, o teclado entra em modo privado e mostra um símbolo de óculos ao fundo. Nada é aprendido nem guardado. Em qualquer app, um toque no botão de óculos liga o modo.</p>
+        </article>
+        <article class="card">
+          <div class="art art--popup" aria-hidden="true">
+            <div class="popup"><span>á</span><span class="on">ã</span><span>â</span><span>à</span><span>ä</span></div>
+            <div class="mini-keys mini-keys--row"><i>s</i><i class="pressed">a</i><i>d</i></div>
+          </div>
+          <h3>Teclado de verdade</h3>
+          <p>Acentos no toque longo, <kbd>ç</kbd> na fileira, autocorreção em português, cursor no espaço, apagar palavras deslizando, emojis e área de transferência.</p>
+        </article>
+        <article class="card card--wide">
+          <div class="styles" aria-hidden="true">
+            <div><b>Norma-padrão</b><p>Gostaria de saber se você pode me enviar o relatório até sexta-feira.</p></div>
+            <div><b>Natural</b><p>Eu queria saber se você pode me mandar o relatório até sexta.</p></div>
+            <div><b>Mensagem</b><p>Queria saber se você pode me mandar o relatório até sexta.</p></div>
+          </div>
+          <h3>Três estilos de revisão</h3>
+          <p>Texto impecável para o trabalho, natural para o dia a dia ou leve para conversas. O teclado pode escolher o tom conforme o app.</p>
+        </article>
+        <article class="card">
+          <div class="art art--tags" aria-hidden="true"><span>Godinho</span><span>Itaguaí</span><span>deploy</span><span>Pix</span><span>feedback</span></div>
+          <h3>Aprende os seus nomes</h3>
+          <p>Cadastre nomes, empresas e jargões. O ditado, a revisão e as sugestões passam a escrever do jeito certo.</p>
+        </article>
+        <article class="card card--wide">
+          <div class="art" aria-hidden="true">
+            <div class="toggle"><span>Original</span><span class="on">Revisado</span></div>
+          </div>
+          <h3>Volta ao original num toque</h3>
+          <p>Logo após o ditado, um botão troca o texto revisado pelo que você disse, palavra por palavra. Também dá para desfazer.</p>
+        </article>
+        <article class="card">
+          <div class="art" aria-hidden="true">
+            <div class="notify"><span class="notify__icon"></span><span><b>Novo modelo disponível</b><small>conferido por SHA-256</small></span></div>
+          </div>
+          <h3>Modelos que melhoram</h3>
+          <p>Quando sai um modelo melhor, o app avisa e baixa com um toque. Nada é baixado sem você pedir.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Speed test: the new feature. -->
+  <section id="velocidade" class="band">
+    <div class="wrap split">
+      <div class="split__text">
+        <p class="eyebrow">Teste de velocidade</p>
+        <h2>Descubra a melhor combinação para o seu celular</h2>
+        <p class="section__lede">O teste de velocidade roda cada modelo instalado no seu aparelho com o mesmo áudio e o mesmo ditado, e mostra quanto tempo você esperaria pelo texto pronto em cada combinação de voz e revisão.</p>
+        <ul class="ticks">
+          <li><b>Tempo por tamanho de texto.</b> Uma mensagem de 15 palavras, um parágrafo de 50 e um texto longo de 150.</li>
+          <li><b>Precisão medida.</b> Cada Whisper transcreve um trecho de “O Alienista” e o app compara palavra por palavra.</li>
+          <li><b>Estimativa sem baixar.</b> Veja quanto levariam os modelos que você ainda não baixou, calculado a partir dos que foram medidos.</li>
+          <li><b>Um toque para usar.</b> Escolha a combinação mais rápida, a de melhor qualidade ou a equilibrada.</li>
+        </ul>
+        <div class="lengths" aria-hidden="true">
+          <div><b>15</b><span>palavras</span><i class="len len--1"></i></div>
+          <div><b>50</b><span>palavras</span><i class="len len--2"></i></div>
+          <div><b>150</b><span>palavras</span><i class="len len--3"></i></div>
+        </div>
+      </div>
+      <figure class="split__media">
+        <div class="phone phone--tall">
+          <div class="phone__screen phone__screen--app phone__screen--auto">
+            <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+            <picture>
+              <source srcset="img/app-benchmark-dark.webp" media="(prefers-color-scheme: dark)">
+              <img class="phone__full" src="img/app-benchmark.webp" width="600" height="1301" alt="Tela do teste de velocidade com o tempo de cada combinação de modelos">
+            </picture>
+          </div>
+        </div>
+        <figcaption>Imagem com valores ilustrativos. No seu celular, o teste mede o seu aparelho.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- The settings app. -->
+  <section id="app" class="band band--soft">
+    <div class="wrap">
+      <p class="eyebrow">O aplicativo</p>
+      <h2>Configurado em dois minutos</h2>
+      <p class="section__lede">O app guia a instalação, recomenda os modelos certos para a memória do seu celular e deixa você experimentar o ditado na hora.</p>
+      <div class="trio">
+        <figure class="shot shot--app">
+          <div class="phone phone--tall"><div class="phone__screen phone__screen--app"><div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div><img class="phone__full" src="img/app-onboarding.webp" width="600" height="1301" alt="Primeiros passos: ativar, selecionar, liberar o microfone e baixar os modelos"></div></div>
+          <figcaption><b>Primeiros passos</b>Quatro etapas, cada uma com o botão certo.</figcaption>
+        </figure>
+        <figure class="shot shot--app shot--raised">
+          <div class="phone phone--tall"><div class="phone__screen phone__screen--app phone__screen--auto">
+            <div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div>
+            <picture>
+              <source srcset="img/app-home-dark.webp" media="(prefers-color-scheme: dark)">
+              <img class="phone__full" src="img/app-home.webp" width="600" height="1301" alt="Tela inicial do app com campo para experimentar e os ajustes">
+            </picture>
+          </div></div>
+          <figcaption><b>Início</b>Experimente o ditado e ajuste tudo em um lugar.</figcaption>
+        </figure>
+        <figure class="shot shot--app">
+          <div class="phone phone--tall"><div class="phone__screen phone__screen--app"><div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div><img class="phone__full" src="img/app-models.webp" width="600" height="1301" alt="Escolha dos modelos de IA com pacote recomendado para o aparelho"></div></div>
+          <figcaption><b>Modelos de IA</b>Pacote recomendado, download retomável e conferido.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy. -->
+  <section id="privacidade" class="band">
+    <div class="wrap">
+      <p class="eyebrow">Privacidade</p>
+      <h2>Um teclado que não espia</h2>
+      <p class="section__lede">Teclado vê tudo o que você escreve. Por isso este foi construído para que a sua voz e o seu texto nunca saiam do celular.</p>
+      <div class="privacy">
+        <ul class="checks">
+          <li><b>Voz e texto ficam no aparelho.</b> Transcrição e revisão rodam no processador do celular. Não existe servidor do teclado.</li>
+          <li><b>O que você digita nunca toca a rede.</b> A parte do código que lida com o seu texto e a sua voz não tem acesso à internet.</li>
+          <li><b>Arquivos conferidos.</b> Cada modelo é fixado em uma versão exata e conferido por SHA-256 antes de ser usado.</li>
+          <li><b>Senhas e abas anônimas.</b> Nesses campos o teclado não aprende palavras, não guarda histórico nem mostra a tecla ampliada, e bloqueia capturas de tela nas senhas.</li>
+          <li><b>Sem rastros.</b> O áudio é apagado da memória ao fim de cada ditado. Sem anúncios, sem contas, sem telemetria e sem backup na nuvem.</li>
+        </ul>
+        <div class="netlist">
+          <p class="netlist__title">Os únicos endereços que o app pode acessar</p>
+          <ul class="netlist__rows">
+          <li class="netlist__row"><span class="ok">✓</span><code>huggingface.co</code><span>modelos de IA</span></li>
+          <li class="netlist__row"><span class="ok">✓</span><code>*.hf.co</code><span>download dos modelos</span></li>
+          <li class="netlist__row"><span class="ok">✓</span><code>maisumfernando.github.io</code><span>avisos de atualização</span></li>
+          <li class="netlist__row"><span class="ok">✓</span><code>sua TV</code><span>só na rede da casa, só o texto da tela “Digitar na TV”</span></li>
+          <li class="netlist__row netlist__row--no"><span class="no">✕</span><code>qualquer outro</code><span>bloqueado no código, inclusive em redirecionamentos</span></li>
+          </ul>
+          <details class="perms">
+            <summary>Todas as permissões do Android</summary>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Permissão</th><th>Para quê</th></tr></thead>
+                <tbody>
+                  <tr><td><code>RECORD_AUDIO</code></td><td>Ouvir enquanto você dita</td></tr>
+                  <tr><td><code>INTERNET</code></td><td>Baixar modelos e checar atualizações</td></tr>
+                  <tr><td><code>POST_NOTIFICATIONS</code></td><td>Mostrar o progresso do download</td></tr>
+                  <tr><td><code>FOREGROUND_SERVICE_DATA_SYNC</code></td><td>Continuar o download em segundo plano</td></tr>
+                  <tr><td><code>VIBRATE</code></td><td>Vibração ao tocar nas teclas</td></tr>
+                  <tr><td><code>WAKE_LOCK</code></td><td>Não deixar o download parar no meio</td></tr>
+                  <tr><td><code>RECEIVE_BOOT_COMPLETED</code></td><td>Reagendar a busca por atualizações</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Compatibility: what each phone gets. -->
+  <section id="compatibilidade" class="band band--soft">
+    <div class="wrap">
+      <p class="eyebrow">Compatibilidade</p>
+      <h2>Roda na maioria dos celulares</h2>
+      <p class="section__lede">Android 8.0 ou superior com processador de 64 bits. O app recomenda os modelos certos para a memória do seu aparelho e usa as instruções mais rápidas do processador dele.</p>
+      <div class="tiers">
+        <div class="tier"><div class="ram ram--1" aria-hidden="true"><i></i><i></i><i></i><i></i></div><p class="tier__ram">até 3 GB</p><p>Whisper Base<br>Qwen 3.5 0.8B</p><p class="tier__size">0,9 GB de download</p></div>
+        <div class="tier"><div class="ram ram--2" aria-hidden="true"><i></i><i></i><i></i><i></i></div><p class="tier__ram">4 a 5 GB</p><p>Whisper Small<br>Qwen 3.5 2B</p><p class="tier__size">1,5 GB de download</p></div>
+        <div class="tier"><div class="ram ram--3" aria-hidden="true"><i></i><i></i><i></i><i></i></div><p class="tier__ram">6 a 7 GB</p><p>Whisper Small<br>Gemma 4 E2B</p><p class="tier__size">3,1 GB de download</p></div>
+        <div class="tier"><div class="ram ram--4" aria-hidden="true"><i></i><i></i><i></i><i></i></div><p class="tier__ram">8 GB ou mais</p><p>Whisper Large v3 Turbo<br>Gemma 4 E2B</p><p class="tier__size">3,4 GB de download</p></div>
+      </div>
+      <p class="aside">Celulares Huawei e Honor (EMUI) funcionam normalmente. Para ditar senhas, desative o “Teclado seguro” do sistema nas configurações de idioma e entrada.</p>
+    </div>
+  </section>
+
+  <!-- Install: a real sequence. -->
+  <section id="instalar" class="band band--night">
+    <div class="wrap install">
+      <div>
+        <p class="eyebrow">Instalar</p>
+        <h2>Pronto em dois minutos</h2>
+        <ol class="steps">
+          <li><span class="steps__n">1</span><div><h3>Baixe o APK</h3><p>Toque em “Baixar” nesta página, pelo celular. Se o Android pedir, permita instalar apps do navegador.</p></div></li>
+          <li><span class="steps__n">2</span><div><h3>Ative o teclado</h3><p>Abra o app e toque em “Ativar”. Ele leva você direto à tela certa das configurações.</p></div></li>
+          <li><span class="steps__n">3</span><div><h3>Libere o microfone</h3><p>Necessário para o ditado. O áudio nunca é gravado em arquivo nem enviado.</p></div></li>
+          <li><span class="steps__n">4</span><div><h3>Baixe os modelos</h3><p>Um toque baixa o pacote recomendado. Use Wi-Fi: são de 0,9 a 3,4 GB, uma única vez.</p></div></li>
+        </ol>
+      </div>
+      <div class="get">
+        <a class="btn btn--big btn--light" href="download/Teclado-do-Fernando-Godinho-1.2.0.apk">Baixar para Android · v1.2.0</a>
+        <p class="get__meta">11 MB · Android 8.0 ou superior · os modelos de IA são baixados pelo app</p>
+        <div class="qr">
+          <img src="img/qr-site.svg" width="148" height="148" alt="QR code que abre esta página no celular">
+          <p>Está no computador? Aponte a câmera do celular para abrir esta página nele.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Themes: real captures of every keyboard theme. -->
+  <section id="temas" class="band band--soft">
+    <div class="wrap">
+      <p class="eyebrow">Temas</p>
+      <h2>Sete temas, todos fáceis de ler</h2>
+      <p class="section__lede">Do Clássico, que acompanha o claro e o escuro do celular, ao Alto contraste. Cada cor passa por um teste automático de legibilidade antes de entrar no app.</p>
+      <div class="themes">
+        <figure><img src="img/kbd-light.webp" width="600" height="417" alt="Tema Clássico claro"><figcaption>Clássico</figcaption></figure>
+        <figure><img src="img/theme-graphite.webp" width="600" height="417" alt="Tema Grafite"><figcaption>Grafite</figcaption></figure>
+        <figure><img src="img/theme-midnight.webp" width="600" height="417" alt="Tema Meia-noite"><figcaption>Meia-noite</figcaption></figure>
+        <figure><img src="img/theme-sage.webp" width="600" height="417" alt="Tema Sálvia"><figcaption>Sálvia</figcaption></figure>
+        <figure><img src="img/theme-sand.webp" width="600" height="417" alt="Tema Areia"><figcaption>Areia</figcaption></figure>
+        <figure><img src="img/theme-lavender.webp" width="600" height="417" alt="Tema Lavanda"><figcaption>Lavanda</figcaption></figure>
+        <figure><img src="img/theme-high-contrast.webp" width="600" height="417" alt="Tema Alto contraste"><figcaption>Alto contraste</figcaption></figure>
+        <figure><img src="img/kbd-dark.webp" width="600" height="417" alt="Tema Clássico escuro"><figcaption>Clássico escuro</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- TV: type and dictate on the TV from the phone. -->
+  <section id="tv" class="band band--night">
+    <div class="wrap split">
+      <div class="split__text">
+        <p class="eyebrow">Teclado na TV</p>
+        <h2>Digite e dite na TV pelo celular</h2>
+        <p class="section__lede">A TV abriu a busca do YouTube, da Netflix ou do Globoplay? Uma notificação aparece no celular: toque, escreva ou fale, e o texto surge na TV na hora. A conexão é direta pela sua rede Wi-Fi, sem internet.</p>
+        <ul class="brands" aria-label="TVs compatíveis">
+          <li><b>Samsung</b><span>Tizen, de 2016 em diante</span></li>
+          <li><b>LG</b><span>webOS</span></li>
+          <li><b>Google TV e Android TV</b><span>TCL, Sony, Philips, Philco, Sharp, Hisense, Multilaser…</span></li>
+          <li><b>Roku TV</b><span>TCL, Semp, AOC, Philco</span></li>
+        </ul>
+        <p class="tv-note">Na primeira vez, a TV pede para você permitir a conexão (ou mostra um código). TVs Hisense com VIDAA e Panasonic ainda não são compatíveis.</p>
+      </div>
+      <figure class="split__media">
+        <div class="phone phone--tall"><div class="phone__screen phone__screen--app"><div class="status"><span>9:41</span><span class="status__icons"><i></i><i></i><i></i></span></div><img class="phone__full" src="img/app-tv.webp" width="600" height="1301" alt="Tela Teclado na TV com as TVs encontradas na rede"></div></div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Local helpers that need no AI. -->
+  <section id="ferramentas" class="band">
+    <div class="wrap split">
+      <figure class="split__media">
+        <div class="kbd-stack">
+          <img src="img/kbd-smart.webp" width="600" height="417" alt="Barra do teclado com o resultado de uma conta e de uma conversão">
+          <img src="img/kbd-preview.webp" width="600" height="417" alt="Prévia de uma ferramenta de IA com os botões Substituir, Inserir abaixo, Copiar e Descartar">
+        </div>
+      </figure>
+      <div class="split__text">
+        <p class="eyebrow">Ferramentas</p>
+        <h2>Pequenas ajudas que fazem diferença</h2>
+        <ul class="ticks">
+          <li><b>Calculadora.</b> Digite “1.250,50 × 3 =” e o resultado aparece pronto para inserir.</li>
+          <li><b>Conversor.</b> “10 km em milhas”, “30 °C em F”, “2,5 kg em libras”.</li>
+          <li><b>Respostas salvas.</b> Assinatura, endereço e respostas prontas com um toque ou com /atalho.</li>
+          <li><b>Lembretes.</b> “/lembrete amanhã às 8h ligar para o banco” abre a agenda já preenchida.</li>
+          <li><b>Escrever com calma.</b> Um editor grande para mensagens longas, que devolve o texto ao app.</li>
+          <li><b>Aviso de dados sensíveis.</b> Número de cartão, CPF ou CNPJ? O teclado lembra de conferir antes de enviar.</li>
+          <li><b>IA com prévia.</b> Resumir, sugerir resposta, deixar mais claro, sinônimos e mais: você vê antes de trocar o texto.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Support the project (Pix). -->
+  <section id="apoie" class="band band--soft">
+    <div class="wrap support">
+      <div>
+        <p class="eyebrow">Apoie o projeto</p>
+        <h2>Gratuito para todos. Mantido por quem gosta.</h2>
+        <p class="section__lede">Este teclado é um projeto de Fernando Godinho, apresentado no canal dele no YouTube. Não tem anúncios, não tem assinatura e não vende dados. Se ele facilita o seu dia, você pode ajudar o projeto a continuar com um Pix de qualquer valor.</p>
+      </div>
+      <div class="pix">
+        <p class="pix__label">Chave Pix (e-mail)</p>
+        <code id="pix-key" class="pix__key">fjgs@outlook.com</code>
+        <button type="button" id="copy-pix" class="btn">Copiar chave Pix</button>
+        <p class="pix__note">No app do seu banco: Pix › Pagar com chave. Confira o nome Fernando Godinho antes de confirmar. A contribuição é voluntária e não muda nada no app.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="perguntas" class="band">
+    <div class="wrap narrow">
+      <p class="eyebrow">Dúvidas</p>
+      <h2>Perguntas frequentes</h2>
+      <div class="faq">
+        <details>
+          <summary>É seguro instalar um APK de fora da loja?</summary>
+          <p>Este APK é compilado automaticamente a partir do código público no GitHub e assinado sempre com a mesma chave. Confira o SHA-256 no rodapé desta página. O app não pede acesso a contatos, arquivos, localização nem SMS.</p>
+        </details>
+        <details>
+          <summary>Quais modelos devo escolher?</summary>
+          <p>O app já recomenda um pacote para a memória do seu celular. Se quiser comparar, abra “Teste de velocidade”: ele mede os modelos no seu aparelho e mostra o tempo de cada combinação para mensagens curtas, parágrafos e textos longos.</p>
+        </details>
+        <details>
+          <summary>Quais TVs funcionam com o Teclado na TV?</summary>
+          <p>Samsung com Tizen (2016 em diante), LG com webOS, TVs com Google TV ou Android TV (TCL, Sony, Philips, Philco, Sharp, Hisense e outras) e TVs Roku (TCL, Semp, AOC, Philco). O celular e a TV precisam estar na mesma rede Wi-Fi. TVs Hisense com VIDAA e Panasonic ainda não são compatíveis.</p>
+        </details>
+        <details>
+          <summary>Funciona sem internet?</summary>
+          <p>Sim. Depois de baixar os modelos, o ditado, a revisão e o teclado funcionam totalmente offline.</p>
+        </details>
+        <details>
+          <summary>Gasta muita bateria?</summary>
+          <p>Só enquanto você dita. Os modelos ficam carregados por alguns minutos após o uso, para responder rápido, e depois a memória é liberada. Você ajusta esse tempo nas configurações.</p>
+        </details>
+        <details>
+          <summary>Funciona em outros idiomas?</summary>
+          <p>Sim. O padrão é português do Brasil, com a melhor precisão, mas você pode ditar em inglês, espanhol, francês, italiano e alemão, ou deixar o idioma em detecção automática.</p>
+        </details>
+        <details>
+          <summary>Por que não está na Play Store?</summary>
+          <p>Por enquanto a distribuição é por aqui. O app já está preparado para lojas como a Google Play e a AppGallery, com o nome traduzido em mais de 70 idiomas.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="novidades" class="band band--soft">
+    <div class="wrap narrow">
+      <p class="eyebrow">Versões</p>
+      <h2>Novidades</h2>
+      <div class="changelog">
+        <article class="release">
+          <div class="release__head"><span class="release__version">Versão 1.2.0</span><span class="release__date">2026-11-03</span></div>
+          <ul>
+          <li>Digitação por deslize: deslize o dedo pelas letras e solte no fim da palavra. As outras opções aparecem na barra, e apagar logo em seguida remove a palavra inteira. Funciona com acentos e ç, aprende com o seu vocabulário e roda no celular.</li>
+          <li>Barra de espaço como trackpad: toque e segure o espaço e o teclado inteiro vira um trackpad para mover o cursor (com dois dedos, seleciona texto). O ditado fica só no botão do microfone.</li>
+          <li>Seis temas novos para o teclado (Grafite, Meia-noite, Sálvia, Areia, Lavanda e Alto contraste) e microfone em cor neutra no tema Clássico. Todas as cores passam por um teste automático de legibilidade.</li>
+          <li>Teclado na TV: digite e dite pelo celular em TVs Samsung, LG, Roku, Google TV e Android TV na mesma rede Wi-Fi. A TV avisa quando abre uma busca, e uma notificação abre a tela de digitação.</li>
+          <li>Respostas salvas e atalhos: guarde assinatura, endereço e respostas prontas e insira com um toque ou digitando /atalho.</li>
+          <li>Calculadora e conversor de unidades na barra do teclado (“12,5 × 3 =”, “10 km em milhas”), lembretes e timers (“/lembrete amanhã às 8h …”), domínios de e-mail e aviso ao enviar número de cartão, CPF ou CNPJ.</li>
+          <li>Editor “Escrever com calma” para mensagens longas, que devolve o texto ao app de origem.</li>
+          <li>Ferramentas de IA com prévia antes de alterar o texto e novas opções: mais claro, mais simples, descontraído, assertivo, profissional, expandir anotações, resumir, sugerir resposta, perguntas sem resposta, ambiguidades, coerência e sinônimos.</li>
+          <li>Modo privado automático em abas anônimas e em apps de privacidade (Firefox Focus, DuckDuckGo, Tor, Signal, gerenciadores de senha), com símbolo de óculos no teclado e botão para ligar em qualquer app.</li>
+          <li>Página “Apoie o projeto”, com a chave Pix para contribuições.</li>
+          <li>Correções: os painéis não fecham mais quando o app reinicia o campo; o texto ditado também passa pelo alerta de dados sensíveis.</li>
+          </ul>
+        </article>
+        <article class="release">
+          <div class="release__head"><span class="release__version">Versão 1.1.0</span><span class="release__date">2026-11-03</span></div>
+          <ul>
+          <li>Teste de velocidade: mede cada modelo instalado no seu celular e mostra o tempo de espera de cada combinação de voz e revisão para mensagens de 15, 50 e 150 palavras, com a precisão do Whisper e um toque para usar a combinação escolhida.</li>
+          <li>O teclado começa na altura máxima (100%), ajustada ao tamanho da tela; dá para deixá-lo mais compacto nos ajustes.</li>
+          <li>Corrigido: no tema escuro, títulos do app apareciam em preto sobre fundo escuro.</li>
+          <li>Corrigido: ao soltar a barra de espaço, a mensagem “Ouvindo… solte para inserir” continuava na tecla enquanto o texto era preparado.</li>
+          <li>Site novo, com capturas de tela do teclado, e botão de download que sempre leva à versão mais recente.</li>
+          </ul>
+        </article>
+        <article class="release">
+          <div class="release__head"><span class="release__version">Versão 1.0.0</span><span class="release__date">2026-11-03</span></div>
+          <ul>
+          <li>Primeira versão pública do Teclado do Fernando Godinho.</li>
+          <li>Ditado com Whisper e revisão por IA no próprio celular, em quatro estilos: norma-padrão, natural, mensagem ou sem IA.</li>
+          <li>Segurar a barra de espaço para falar e soltar para inserir, com prévia ao vivo.</li>
+          <li>Ditado de códigos de verificação, números, e-mails, links e senhas soletradas (com confirmação e tela protegida).</li>
+          <li>Ferramentas de IA: revisar, corrigir, mais formal, mais amigável, mais curto, em tópicos, virar e-mail, traduzir e comando de voz.</li>
+          <li>Teclado completo em português: acentos no toque longo, ç, sugestões e correção automática, emojis, área de transferência, colar inteligente e modo uma mão.</li>
+          <li>Atualização de modelos verificada por SHA-256 e aviso de novas versões.</li>
+          <li>Proteções de privacidade: sem servidores, sem telemetria, rede limitada ao Hugging Face e a este site.</li>
+          </ul>
+        </article>
+      </div>
+      <p class="aside">Versões anteriores ficam na <a href="https://github.com/maisumfernando/C-/releases" rel="noopener">página de versões no GitHub</a>.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__grid">
+    <div>
+      <p class="foot__brand"><img src="icon.svg" alt="" width="24" height="24"> Teclado do Fernando Godinho</p>
+      <p>Código aberto sob a licença Apache 2.0. Whisper, Gemma e Qwen pertencem aos seus autores. <a href="https://github.com/maisumfernando/C-" rel="noopener">Código no GitHub</a>.</p>
+    </div>
+    <div class="checksum">
+      <p class="checksum__label">SHA-256 do APK 1.2.0</p>
+      <code id="sha">d5f7069b5eb99180649b9752d967d1d3d04840bcc353bc2c6b36226fe4d0e4f8</code>
+      <button type="button" id="copy-sha" class="btn btn--ghost btn--small">Copiar</button>
+    </div>
+  </div>
+</footer>
+<script src="app.js"></script>
+<!-- /BODY -->
+</body>
+</html>
